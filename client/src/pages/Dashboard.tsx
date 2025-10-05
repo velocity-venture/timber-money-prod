@@ -3,6 +3,7 @@ import { DebtCard } from "@/components/DebtCard";
 import { PayoffTimeline } from "@/components/PayoffTimeline";
 import { BudgetBreakdown } from "@/components/BudgetBreakdown";
 import { PayoffStrategyCard } from "@/components/PayoffStrategyCard";
+import { AutomatedRecommendations } from "@/components/AutomatedRecommendations";
 import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign, TrendingDown, Calendar, PiggyBank } from "lucide-react";
 
@@ -114,6 +115,8 @@ export default function Dashboard() {
         <PayoffTimeline data={timelineData} />
         <BudgetBreakdown income={6500} categories={budgetCategories} />
       </div>
+
+      <AutomatedRecommendations />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
