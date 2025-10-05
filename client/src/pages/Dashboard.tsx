@@ -3,6 +3,7 @@ import { DebtCard } from "@/components/DebtCard";
 import { PayoffTimeline } from "@/components/PayoffTimeline";
 import { BudgetBreakdown } from "@/components/BudgetBreakdown";
 import { PayoffStrategyCard } from "@/components/PayoffStrategyCard";
+import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign, TrendingDown, Calendar, PiggyBank } from "lucide-react";
 
 export default function Dashboard() {
@@ -59,11 +60,26 @@ export default function Dashboard() {
   return (
     <div className="space-y-6" data-testid="page-dashboard">
       <div>
-        <h1 className="text-3xl font-bold">Financial Dashboard</h1>
+        <h1 className="text-3xl font-bold">Your Automated Financial Command Center</h1>
         <p className="text-muted-foreground mt-1">
-          Your personalized debt freedom roadmap
+          Congratulations! Your financial future is being optimized 24/7 by 30+ years of expert experience
         </p>
       </div>
+
+      <Card className="bg-gradient-to-r from-primary/5 to-chart-1/5 border-primary/20">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-primary mb-1">
+                Your Financial Freedom Status
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You're on the path to complete financial freedom! Our AI is working around the clock, applying sophisticated strategies that typically cost thousands in advisor fees. No more constant input like Monarch Money - just set it and forget it while you focus on your career.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DebtSummaryCard
