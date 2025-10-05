@@ -2,11 +2,20 @@
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
 import OpenAI from "openai";
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY is not set");
-}
+const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = hasOpenAIKey
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+function requireOpenAI() {
+  if (!openai) {
+    throw new Error(
+      "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable to use AI features."
+    );
+  }
+  return openai;
+}
 
 export interface FinancialDocumentAnalysis {
   documentType: string;
@@ -41,6 +50,7 @@ export async function analyzeFinancialDocument(
   base64Image: string,
   documentType: string
 ): Promise<FinancialDocumentAnalysis> {
+  const client = requireOpenAI();
   const systemPrompt = `You are a world-class financial accountant analyzing financial documents. Extract all relevant financial data accurately. Respond in JSON format only.
   
 For document type "${documentType}", extract:
@@ -54,7 +64,7 @@ For document type "${documentType}", extract:
 Always provide amounts as numbers (no currency symbols). Provide APR as percentage number (e.g., 18.99 not 0.1899).`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: "gpt-5",
       messages: [
         {
@@ -97,10 +107,11 @@ export async function generateFinancialAdvice(
     creditScore?: number;
   }
 ): Promise<string> {
+  const client = requireOpenAI();
   const contextStr = JSON.stringify(userContext, null, 2);
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: "gpt-5",
       messages: [
         {
@@ -134,8 +145,9 @@ export async function createDebtPayoffPlan(data: {
   timeline: any[];
   recommendations: string[];
 }> {
+  const client = requireOpenAI();
   try {
-    const response = await openai.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: "gpt-5",
       messages: [
         {
