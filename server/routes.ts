@@ -209,6 +209,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cashflow Analysis - Calculate safe monthly EXTRA
+  app.get("/api/cashflow/analysis", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get user's financial data
+      const debts = await storage.getDebtsByUser(userId);
+      const documents = await storage.getDocumentsByUser(userId);
+      const profile = await storage.getFinancialProfile(userId);
+      
+      // Calculate total minimum debt payments
+      const minimumDebtPayments = debts.reduce((total, debt) => {
+        return total + parseFloat(debt.minimumPayment || "0");
+      }, 0);
+
+      // Extract income and expenses from analyzed documents
+      let monthlyIncome = profile?.monthlyIncome ? parseFloat(profile.monthlyIncome) : 0;
+      let essentialExpenses = 0;
+      let discretionarySpending = 0;
+      let currentSavings = 0;
+
+      // Process documents to extract financial data
+      documents.forEach((doc: any) => {
+        if (doc.analysisData?.extractedData) {
+          const data = doc.analysisData.extractedData;
+          
+          // Extract income
+          if (data.income?.monthlyAmount) {
+            monthlyIncome = Math.max(monthlyIncome, data.income.monthlyAmount);
+          }
+          
+          // Extract expenses from bank statements
+          if (doc.documentType === "bank-statements" && data.expenses) {
+            essentialExpenses += data.expenses.essential || 0;
+            discretionarySpending += data.expenses.discretionary || 0;
+          }
+          
+          // Extract savings
+          if (data.accountBalance) {
+            currentSavings += data.accountBalance;
+          }
+        }
+      });
+
+      // If no detailed expense data, estimate based on income
+      if (essentialExpenses === 0 && monthlyIncome > 0) {
+        essentialExpenses = monthlyIncome * 0.5; // 50% for essentials
+        discretionarySpending = monthlyIncome * 0.2; // 20% for discretionary
+      }
+
+      // Calculate safe monthly EXTRA
+      const netCashflow = monthlyIncome - essentialExpenses - minimumDebtPayments - discretionarySpending;
+      
+      // Safety buffer: Keep 20% of net cashflow as emergency buffer
+      const emergencyBuffer = netCashflow * 0.2;
+      let safeMonthlyExtra = Math.max(0, netCashflow - emergencyBuffer);
+      
+      // Cap at 35% of monthly income for safety
+      safeMonthlyExtra = Math.min(safeMonthlyExtra, monthlyIncome * 0.35);
+      
+      // Round to nearest $25
+      safeMonthlyExtra = Math.round(safeMonthlyExtra / 25) * 25;
+
+      // Calculate confidence score based on data completeness
+      let confidenceScore = 50; // Base score
+      if (monthlyIncome > 0) confidenceScore += 20;
+      if (documents.length > 3) confidenceScore += 15;
+      if (currentSavings > monthlyIncome) confidenceScore += 15;
+      confidenceScore = Math.min(100, confidenceScore);
+
+      // Generate AI recommendations
+      const recommendations = [];
+      
+      if (safeMonthlyExtra > 500) {
+        recommendations.push("Excellent cashflow! Consider the Avalanche method to minimize interest payments.");
+      }
+      
+      if (currentSavings < monthlyIncome) {
+        recommendations.push("Build emergency fund to 1 month of expenses before aggressive debt payoff.");
+      }
+      
+      if (minimumDebtPayments > monthlyIncome * 0.4) {
+        recommendations.push("High debt-to-income ratio. Focus on highest interest debts first.");
+      }
+      
+      if (discretionarySpending > monthlyIncome * 0.3) {
+        recommendations.push("Consider reducing discretionary spending by 10% to accelerate debt freedom.");
+      }
+
+      const analysis = {
+        monthlyIncome,
+        essentialExpenses,
+        minimumDebtPayments,
+        discretionarySpending,
+        currentSavings,
+        safeMonthlyExtra,
+        confidenceScore,
+        recommendations,
+      };
+
+      res.json(analysis);
+    } catch (error: any) {
+      console.error("Error calculating cashflow analysis:", error);
+      res.status(500).json({ message: "Failed to calculate cashflow analysis" });
+    }
+  });
+
   // AI Chat
   app.post("/api/chat", isAuthenticated, async (req: any, res) => {
     try {

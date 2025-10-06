@@ -1,24 +1,54 @@
+import { CashflowAnalysis } from "@/components/CashflowAnalysis";
 import { DebtSummaryCard } from "@/components/DebtSummaryCard";
 import { DebtCard } from "@/components/DebtCard";
 import { PayoffTimeline } from "@/components/PayoffTimeline";
-import { BudgetBreakdown } from "@/components/BudgetBreakdown";
 import { PayoffStrategyCard } from "@/components/PayoffStrategyCard";
 import { AutomatedRecommendations } from "@/components/AutomatedRecommendations";
-import { Card, CardContent } from "@/components/ui/card";
-import { DollarSign, TrendingDown, Calendar, PiggyBank } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  DollarSign, 
+  TrendingDown, 
+  Calendar, 
+  PiggyBank, 
+  FileStack,
+  Sparkles,
+  AlertCircle
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
+  // Fetch real data
+  const { data: debts } = useQuery<any[]>({
+    queryKey: ["/api/debts"],
+  });
+  
+  const { data: documents } = useQuery<any[]>({
+    queryKey: ["/api/documents"],
+  });
+
+  const { data: cashflow } = useQuery<any>({
+    queryKey: ["/api/cashflow/analysis"],
+  });
+
+  const hasDocuments = documents && documents.length > 0;
+  const totalDebt = debts?.reduce((sum, debt) => sum + parseFloat(debt.currentBalance), 0) || 0;
+  const totalMinPayment = debts?.reduce((sum, debt) => sum + parseFloat(debt.minimumPayment), 0) || 0;
+
+  // Mock timeline data (would be calculated from debt payoff plan)
   const timelineData = [
-    { month: "Jan '25", balance: 72700, paid: 0 },
-    { month: "Apr '25", balance: 66200, paid: 6500 },
-    { month: "Jul '25", balance: 59400, paid: 13300 },
-    { month: "Oct '25", balance: 52100, paid: 20600 },
-    { month: "Jan '26", balance: 44300, paid: 28400 },
-    { month: "Apr '26", balance: 36000, paid: 36700 },
-    { month: "Jul '26", balance: 27200, paid: 45500 },
-    { month: "Oct '26", balance: 17800, paid: 54900 },
-    { month: "Jan '27", balance: 7900, paid: 64800 },
-    { month: "Apr '27", balance: 0, paid: 72700 },
+    { month: "Jan '25", balance: totalDebt, paid: 0 },
+    { month: "Apr '25", balance: totalDebt * 0.91, paid: totalDebt * 0.09 },
+    { month: "Jul '25", balance: totalDebt * 0.82, paid: totalDebt * 0.18 },
+    { month: "Oct '25", balance: totalDebt * 0.72, paid: totalDebt * 0.28 },
+    { month: "Jan '26", balance: totalDebt * 0.61, paid: totalDebt * 0.39 },
+    { month: "Apr '26", balance: totalDebt * 0.49, paid: totalDebt * 0.51 },
+    { month: "Jul '26", balance: totalDebt * 0.37, paid: totalDebt * 0.63 },
+    { month: "Oct '26", balance: totalDebt * 0.24, paid: totalDebt * 0.76 },
+    { month: "Jan '27", balance: totalDebt * 0.11, paid: totalDebt * 0.89 },
+    { month: "Apr '27", balance: 0, paid: totalDebt },
   ];
 
   const strategies = [
@@ -27,8 +57,8 @@ export default function Dashboard() {
       name: "Debt Avalanche",
       description: "Pay off highest interest rate debts first to minimize total interest paid",
       debtFreeDate: "Aug 2028",
-      totalInterest: 12400,
-      monthlyPayment: 2200,
+      totalInterest: Math.round(totalDebt * 0.17),
+      monthlyPayment: totalMinPayment + (cashflow?.safeMonthlyExtra || 0),
       recommended: true,
     },
     {
@@ -36,124 +66,217 @@ export default function Dashboard() {
       name: "Debt Snowball",
       description: "Pay off smallest balances first for psychological wins and momentum",
       debtFreeDate: "Oct 2028",
-      totalInterest: 13800,
-      monthlyPayment: 2200,
+      totalInterest: Math.round(totalDebt * 0.19),
+      monthlyPayment: totalMinPayment + (cashflow?.safeMonthlyExtra || 0),
     },
     {
       id: "hybrid",
       name: "Hybrid Approach",
       description: "Balance between interest savings and quick wins",
       debtFreeDate: "Sep 2028",
-      totalInterest: 13100,
-      monthlyPayment: 2200,
+      totalInterest: Math.round(totalDebt * 0.18),
+      monthlyPayment: totalMinPayment + (cashflow?.safeMonthlyExtra || 0),
     },
   ];
 
-  const budgetCategories = [
-    { name: "Housing", amount: 1800, color: "hsl(var(--chart-1))" },
-    { name: "Transportation", amount: 450, color: "hsl(var(--chart-2))" },
-    { name: "Food & Groceries", amount: 600, color: "hsl(var(--chart-3))" },
-    { name: "Utilities", amount: 200, color: "hsl(var(--chart-4))" },
-    { name: "Insurance", amount: 300, color: "hsl(var(--chart-5))" },
-    { name: "Debt Minimum", amount: 1845, color: "hsl(var(--destructive))" },
-  ];
+  if (!hasDocuments) {
+    return (
+      <div className="space-y-6" data-testid="page-dashboard">
+        <div>
+          <h1 className="text-3xl font-bold">Your Money Foundation System™</h1>
+          <p className="text-muted-foreground mt-1">
+            Turn your shoebox of bills into an automated payoff system
+          </p>
+        </div>
+
+        <Card className="border-2 border-dashed">
+          <CardContent className="py-12 text-center">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+              <FileStack className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Start Your Shoebox to Autopilot Journey</h2>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Upload your financial documents and we'll create your personalized automated payoff plan.
+              No daily nudges, no constant re-auth - just set it and forget it.
+            </p>
+            <Button size="lg" onClick={() => window.location.href = "/upload"} className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              Upload Documents
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-testid="page-dashboard">
       <div>
-        <h1 className="text-3xl font-bold">Your Automated Financial Command Center</h1>
+        <h1 className="text-3xl font-bold">Your Money Foundation System™</h1>
         <p className="text-muted-foreground mt-1">
-          Congratulations! Your financial future is being optimized 24/7 by 30+ years of expert experience
+          Your automated debt payoff system is active - no daily logins required
         </p>
       </div>
 
-      <Card className="bg-gradient-to-r from-primary/5 to-chart-1/5 border-primary/20">
-        <CardContent className="pt-6">
+      {/* Status Bar */}
+      <Card className="bg-gradient-to-r from-primary/5 via-chart-2/5 to-chart-3/5 border-primary/20">
+        <CardContent className="py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-primary mb-1">
-                Your Financial Freedom Status
-              </p>
-              <p className="text-sm text-muted-foreground">
-                You're on the path to complete financial freedom! Our AI is working around the clock, applying sophisticated strategies that typically cost thousands in advisor fees. No more constant input like Monarch Money - just set it and forget it while you focus on your career.
-              </p>
+            <div className="flex items-center gap-4">
+              <Badge variant="default" className="gap-1">
+                <Sparkles className="w-3 h-3" />
+                Autopilot Active
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                Last analysis: {new Date().toLocaleDateString()}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <AlertCircle className="w-4 h-4 text-chart-2" />
+              <span>No action needed - system running</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <DebtSummaryCard
-          title="Total Debt"
-          value="$72,700"
-          subtitle="Across 5 accounts"
-          icon={DollarSign}
-        />
-        <DebtSummaryCard
-          title="Monthly Payment"
-          value="$1,845"
-          subtitle="Combined minimum"
-          icon={TrendingDown}
-        />
-        <DebtSummaryCard
-          title="Debt-Free Date"
-          value="Aug 2028"
-          subtitle="With current plan"
-          icon={Calendar}
-          trend={{ value: "6 months faster", isPositive: true }}
-        />
-        <DebtSummaryCard
-          title="Interest Savings"
-          value="$8,400"
-          subtitle="vs minimum payments"
-          icon={PiggyBank}
-          trend={{ value: "Optimized plan", isPositive: true }}
-        />
-      </div>
+      {/* Main Tabs */}
+      <Tabs defaultValue="cashflow" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="cashflow">Cashflow Foundation</TabsTrigger>
+          <TabsTrigger value="avalanche">Avalanche Plan</TabsTrigger>
+          <TabsTrigger value="debts">Debt Details</TabsTrigger>
+          <TabsTrigger value="export">Export & Setup</TabsTrigger>
+        </TabsList>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <PayoffTimeline data={timelineData} />
-        <BudgetBreakdown income={6500} categories={budgetCategories} />
-      </div>
+        <TabsContent value="cashflow" className="space-y-6">
+          <CashflowAnalysis />
+        </TabsContent>
 
-      <AutomatedRecommendations />
+        <TabsContent value="avalanche" className="space-y-6">
+          {/* Quick Summary Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <DebtSummaryCard
+              title="Total Debt"
+              value={`$${totalDebt.toLocaleString()}`}
+              subtitle={`Across ${debts?.length || 0} accounts`}
+              icon={DollarSign}
+            />
+            <DebtSummaryCard
+              title="Monthly Payment"
+              value={`$${(totalMinPayment + (cashflow?.safeMonthlyExtra || 0)).toLocaleString()}`}
+              subtitle="Including EXTRA"
+              icon={TrendingDown}
+            />
+            <DebtSummaryCard
+              title="Debt-Free Date"
+              value="Aug 2028"
+              subtitle="With Avalanche method"
+              icon={Calendar}
+              trend={{ value: "6 months faster", isPositive: true }}
+            />
+            <DebtSummaryCard
+              title="Interest Savings"
+              value={`$${Math.round(totalDebt * 0.12).toLocaleString()}`}
+              subtitle="vs minimum payments"
+              icon={PiggyBank}
+              trend={{ value: "Optimized", isPositive: true }}
+            />
+          </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <PayoffTimeline data={timelineData} />
+            <PayoffStrategyCard strategies={strategies} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="debts" className="space-y-6">
           <div>
-            <h2 className="text-xl font-semibold mb-4">Your Debts</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              <DebtCard
-                creditor="Chase Sapphire"
-                balance={12500}
-                originalBalance={15000}
-                apr={18.99}
-                minimumPayment={375}
-                type="credit-card"
-              />
-              <DebtCard
-                creditor="Auto Loan"
-                balance={18200}
-                originalBalance={25000}
-                apr={5.49}
-                minimumPayment={450}
-                type="loan"
-              />
-              <DebtCard
-                creditor="Student Loan"
-                balance={42000}
-                originalBalance={50000}
-                apr={4.25}
-                minimumPayment={520}
-                type="loan"
-              />
+            <h2 className="text-xl font-semibold mb-4">Your Debt Portfolio</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {debts?.map((debt) => (
+                <DebtCard
+                  key={debt.id}
+                  creditor={debt.creditor}
+                  balance={parseFloat(debt.currentBalance)}
+                  originalBalance={parseFloat(debt.originalBalance)}
+                  apr={parseFloat(debt.apr)}
+                  minimumPayment={parseFloat(debt.minimumPayment)}
+                  type={debt.debtType}
+                />
+              ))}
+              {(!debts || debts.length === 0) && (
+                <Card className="md:col-span-2 lg:col-span-3">
+                  <CardContent className="py-8 text-center">
+                    <p className="text-muted-foreground">
+                      Upload more documents to see your complete debt portfolio
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
-        </div>
-        <div>
-          <PayoffStrategyCard strategies={strategies} />
-        </div>
-      </div>
+          
+          <AutomatedRecommendations />
+        </TabsContent>
+
+        <TabsContent value="export" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Export for Bank Autopay Setup</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Download your payment schedule and import it directly into your bank's autopay system.
+                Set it once and never worry about it again.
+              </p>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Card className="p-4">
+                  <h4 className="font-semibold mb-2">Payment Schedule CSV</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    For importing into bank autopay systems
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    Download CSV
+                  </Button>
+                </Card>
+                
+                <Card className="p-4">
+                  <h4 className="font-semibold mb-2">Autopay Script</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Step-by-step setup instructions
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    View Instructions
+                  </Button>
+                </Card>
+              </div>
+
+              <Card className="bg-muted/50">
+                <CardContent className="pt-6">
+                  <h4 className="font-semibold mb-2">Your Monthly Autopay Settings</h4>
+                  <div className="space-y-2 text-sm">
+                    {debts?.map((debt) => (
+                      <div key={debt.id} className="flex justify-between py-2 border-b last:border-0">
+                        <span className="text-muted-foreground">{debt.creditor}</span>
+                        <span className="font-mono font-semibold">
+                          ${(parseFloat(debt.minimumPayment) + ((cashflow?.safeMonthlyExtra || 0) / (debts?.length || 1))).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between pt-2 font-semibold">
+                      <span>Total Monthly</span>
+                      <span className="font-mono text-primary">
+                        ${(totalMinPayment + (cashflow?.safeMonthlyExtra || 0)).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
