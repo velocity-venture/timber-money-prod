@@ -1,7 +1,7 @@
-# AI-Powered Financial Management Application
+# MoneyMind AI - Your Automated Money Management Platform
 
 ## Overview
-Debt Freedom is a comprehensive financial management platform that uses AI to analyze financial documents and provide personalized debt management strategies. Built with React, Express, PostgreSQL, and OpenAI, the app offers bank-level security for processing sensitive financial information.
+MoneyMind AI is a comprehensive AI-powered financial management platform that acts as your 24/7 money manager, handling everything from bill monitoring to wealth building with minimal user input. Built with React, Express, PostgreSQL, and OpenAI, the app offers bank-level security while automating your entire financial life - not just debt management.
 
 ## Recent Changes (January 2025)
 - ✅ Integrated Replit Auth for secure user authentication (supports Google, GitHub, email/password)
@@ -12,6 +12,11 @@ Debt Freedom is a comprehensive financial management platform that uses AI to an
 - ✅ Created landing page, pricing page, privacy policy, and terms of service
 - ✅ Integrated frontend with authentication system
 - ✅ Set up document upload with AI-powered analysis
+- ✅ **MAJOR REBRAND**: Repositioned from "Debt Freedom" to "MoneyMind AI" - comprehensive money management
+- ✅ Updated all messaging to emphasize automated financial management, not just debt reduction
+- ✅ Added prominent legal disclaimers for informational purposes only
+- ✅ Enhanced mobile experience with photo capture capabilities for document upload
+- ✅ Rebranded UI to highlight 24/7 AI automation and broader financial features
 
 ## Project Architecture
 
