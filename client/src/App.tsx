@@ -15,6 +15,7 @@ import FinancialProfile from "@/pages/FinancialProfile";
 import Advisor from "@/pages/Advisor";
 import Pricing from "@/pages/Pricing";
 import Privacy from "@/pages/Privacy";
+import PrivacySettings from "@/pages/PrivacySettings";
 import Terms from "@/pages/Terms";
 import NotFound from "@/pages/not-found";
 
@@ -47,6 +48,7 @@ function Router() {
           <Route path="/advisor" component={Advisor} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/privacy" component={Privacy} />
+          <Route path="/privacy-settings" component={PrivacySettings} />
           <Route path="/terms" component={Terms} />
         </>
       )}

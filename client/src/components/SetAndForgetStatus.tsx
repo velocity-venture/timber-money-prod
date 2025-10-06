@@ -15,7 +15,8 @@ import {
   TrendingUp,
   RefreshCw,
   XCircle,
-  Settings
+  Settings,
+  Shield
 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -296,10 +297,21 @@ export function SetAndForgetStatus() {
             <p className="text-sm text-muted-foreground">
               Last full system check: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
             </p>
-            <Button variant="outline" size="sm" className="mt-2">
-              <Settings className="w-4 h-4 mr-2" />
-              System Settings
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="mt-2">
+                <Settings className="w-4 h-4 mr-2" />
+                System Settings
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => window.location.href = "/privacy-settings"}
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Privacy Settings
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
