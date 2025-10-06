@@ -1,6 +1,6 @@
 import { ShoeboxUploadZone } from "@/components/ShoeboxUploadZone";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Zap, Lock, FileStack, Sparkles, Clock } from "lucide-react";
+import { Shield, Zap, Lock, FileStack, Sparkles, Clock, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +80,25 @@ export default function Upload() {
             I'm Already Organized
           </Button>
         </div>
+      </div>
+
+      {/* Mobile Feature Banner */}
+      <div className="md:hidden">
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <Smartphone className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Mobile-Optimized</p>
+                <p className="text-xs text-muted-foreground">
+                  Take photos directly with your camera or upload from your photo library
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Upload Zone */}

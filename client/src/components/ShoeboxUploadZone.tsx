@@ -1,4 +1,4 @@
-import { Upload, FileText, Image as ImageIcon, X, FileStack, AlertCircle, CheckCircle, Loader2, Sparkles } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, X, FileStack, AlertCircle, CheckCircle, Loader2, Sparkles, Camera, Smartphone } from "lucide-react";
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -324,7 +324,7 @@ export function ShoeboxUploadZone({ mode }: ShoeboxUploadZoneProps) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed p-12 text-center transition-all
+          relative border-2 border-dashed p-8 md:p-12 text-center transition-all
           ${isDragging ? "border-primary bg-primary/10" : "border-border"}
         `}
         data-testid="upload-zone-shoebox"
@@ -332,10 +332,11 @@ export function ShoeboxUploadZone({ mode }: ShoeboxUploadZoneProps) {
         <input
           type="file"
           multiple
-          accept=".pdf,.png,.jpg,.jpeg,.csv,.xls,.xlsx"
+          accept=".pdf,.png,.jpg,.jpeg,.csv,.xls,.xlsx,image/*"
           onChange={handleFileSelect}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
           data-testid="input-file-shoebox"
+          id="file-input-hidden"
         />
         
         <div className="flex flex-col items-center gap-6">
@@ -359,6 +360,7 @@ export function ShoeboxUploadZone({ mode }: ShoeboxUploadZoneProps) {
             
             <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground">
               <Badge variant="outline">PDF</Badge>
+              <Badge variant="outline">Photos</Badge>
               <Badge variant="outline">Images</Badge>
               <Badge variant="outline">CSV</Badge>
               <Badge variant="outline">Excel</Badge>
@@ -373,6 +375,85 @@ export function ShoeboxUploadZone({ mode }: ShoeboxUploadZoneProps) {
           </p>
         </div>
       </Card>
+
+      {/* Mobile-optimized upload buttons */}
+      <div className="grid gap-3 md:hidden">
+        <label htmlFor="camera-input">
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileSelect}
+            className="hidden"
+            id="camera-input"
+            multiple
+            data-testid="input-camera"
+          />
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="w-full h-14" 
+            asChild 
+            data-testid="button-take-photo"
+          >
+            <span>
+              <Camera className="w-5 h-5 mr-2" />
+              Take Photo of Document
+            </span>
+          </Button>
+        </label>
+        
+        <label htmlFor="photo-library-input">
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={handleFileSelect}
+            className="hidden"
+            id="photo-library-input"
+            multiple
+            data-testid="input-photo-library"
+          />
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="w-full h-14" 
+            asChild 
+            data-testid="button-photo-library"
+          >
+            <span>
+              <ImageIcon className="w-5 h-5 mr-2" />
+              Choose from Photo Library
+            </span>
+          </Button>
+        </label>
+      </div>
+
+      {/* Desktop-optimized upload button */}
+      <div className="hidden md:flex justify-center">
+        <label htmlFor="desktop-file-input">
+          <input
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.csv,.xls,.xlsx,image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+            id="desktop-file-input"
+            multiple
+            data-testid="input-desktop-file"
+          />
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="gap-2" 
+            asChild 
+            data-testid="button-browse-files"
+          >
+            <span>
+              <Upload className="w-5 h-5" />
+              Browse Files
+            </span>
+          </Button>
+        </label>
+      </div>
 
       {files.length > 0 && (
         <>
