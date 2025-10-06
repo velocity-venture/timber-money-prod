@@ -15,6 +15,8 @@ import {
   TrendingDown,
   FileText,
   Settings,
+  CreditCard,
+  Crown,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -46,6 +48,19 @@ const menuItems = [
   },
 ];
 
+const paymentItems = [
+  {
+    title: "One-time Payment",
+    url: "/checkout",
+    icon: CreditCard,
+  },
+  {
+    title: "Subscribe Premium",
+    url: "/subscribe",
+    icon: Crown,
+  },
+];
+
 export function AppSidebar() {
   const [location] = useLocation();
 
@@ -68,6 +83,28 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location === item.url}
+                    data-testid={`nav-${item.title.toLowerCase().replace(/\s/g, "-")}`}
+                  >
+                    <Link href={item.url}>
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup>
+          <SidebarGroupLabel>Payments</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {paymentItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

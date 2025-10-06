@@ -17,6 +17,10 @@ import Pricing from "@/pages/Pricing";
 import Privacy from "@/pages/Privacy";
 import PrivacySettings from "@/pages/PrivacySettings";
 import Terms from "@/pages/Terms";
+import Checkout from "@/pages/checkout";
+import Subscribe from "@/pages/subscribe";
+import PaymentSuccess from "@/pages/payment-success";
+import SubscriptionSuccess from "@/pages/subscription-success";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -47,6 +51,10 @@ function Router() {
           <Route path="/profile" component={FinancialProfile} />
           <Route path="/advisor" component={Advisor} />
           <Route path="/pricing" component={Pricing} />
+          <Route path="/checkout" component={Checkout} />
+          <Route path="/subscribe" component={Subscribe} />
+          <Route path="/payment-success" component={PaymentSuccess} />
+          <Route path="/subscription-success" component={SubscriptionSuccess} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/privacy-settings" component={PrivacySettings} />
           <Route path="/terms" component={Terms} />
