@@ -84,7 +84,7 @@ export function SetAndForgetStatus() {
     updateAlertSettings.mutate(newSettings);
   };
 
-  const criticalAlerts = [
+  const criticalAlerts: Array<{ id: number; message: string; severity: string }> = [
     // Only show if there are actual critical issues
     // { id: 1, message: "Missed payment to Chase Card", severity: "critical" },
   ];
