@@ -38,6 +38,17 @@ export default function Landing() {
         </div>
       </header>
 
+      {/* Legal Disclaimer Banner */}
+      <div className="bg-muted/50 border-b border-border py-3">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            <Shield className="w-4 h-4 inline-block mr-2" />
+            <span className="font-medium">Important:</span> This service is for informational purposes only. 
+            Please consult your accountant or trusted tax advisor before implementing any financial suggestions.
+          </p>
+        </div>
+      </div>
+
       <main className="container mx-auto px-4 py-20">
         <section className="text-center mb-24 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-chart-2/10 blur-3xl opacity-50 -z-10"></div>

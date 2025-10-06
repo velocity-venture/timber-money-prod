@@ -2,6 +2,8 @@ import { FinancialProfileCard } from "@/components/FinancialProfileCard";
 import { AssetCard } from "@/components/AssetCard";
 import { CreditReportSummary } from "@/components/CreditReportSummary";
 import { DebtCard } from "@/components/DebtCard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Shield } from "lucide-react";
 
 export default function FinancialProfile() {
   const creditFactors = [
@@ -39,6 +41,15 @@ export default function FinancialProfile() {
           Complete overview of your assets, liabilities, and creditworthiness
         </p>
       </div>
+
+      {/* Legal Disclaimer */}
+      <Alert className="bg-muted/50 border-muted">
+        <Shield className="h-4 w-4" />
+        <AlertDescription>
+          <span className="font-medium">Disclaimer:</span> This information is for educational purposes only. 
+          Consult your accountant or tax advisor before making financial decisions.
+        </AlertDescription>
+      </Alert>
 
       <FinancialProfileCard
         totalAssets={564300}

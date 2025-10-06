@@ -9,6 +9,7 @@ import { AutomatedRecommendations } from "@/components/AutomatedRecommendations"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   DollarSign, 
   TrendingDown, 
@@ -16,7 +17,8 @@ import {
   PiggyBank, 
   FileStack,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Shield
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -119,6 +121,15 @@ export default function Dashboard() {
           Your automated debt payoff system is active - no daily logins required
         </p>
       </div>
+
+      {/* Legal Disclaimer */}
+      <Alert className="bg-muted/50 border-muted">
+        <Shield className="h-4 w-4" />
+        <AlertDescription>
+          <span className="font-medium">Disclaimer:</span> This service provides informational guidance only. 
+          Please consult your accountant or trusted tax advisor before implementing any financial suggestions.
+        </AlertDescription>
+      </Alert>
 
       {/* Status Bar */}
       <Card className="bg-gradient-to-r from-primary/5 via-chart-2/5 to-chart-3/5 border-primary/20">
