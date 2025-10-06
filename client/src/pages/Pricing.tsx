@@ -39,62 +39,62 @@ interface PricingTier {
 
 const pricingTiers: PricingTier[] = [
   {
-    id: "diy",
-    name: "DIY Kit",
-    price: 197,
-    description: "Everything you need to create your own debt freedom plan",
+    id: "free",
+    name: "Free Start",
+    price: 0,
+    description: "Start your journey today - everyone deserves a chance at freedom",
     features: [
-      { text: "Shoebox Document Upload", included: true, icon: FileStack },
-      { text: "AI Document Analysis", included: true, icon: Sparkles },
-      { text: "Cashflow Foundation Calculator", included: true, icon: Calculator },
-      { text: "Basic Avalanche Plan", included: true, icon: TrendingUp },
-      { text: "CSV Export for Banks", included: true, icon: Download },
-      { text: "30-Day Email Course", included: true, icon: Calendar },
-      { text: "1-on-1 Setup Call", included: false, icon: HeadphonesIcon },
-      { text: "Quarterly Check-ins", included: false, icon: Clock },
-      { text: "Done-For-You Setup", included: false, icon: Users },
+      { text: "Upload 5 Documents", included: true, icon: FileStack },
+      { text: "Basic AI Analysis", included: true, icon: Sparkles },
+      { text: "Simple Debt Calculator", included: true, icon: Calculator },
+      { text: "Starter Avalanche Plan", included: true, icon: TrendingUp },
+      { text: "Hope & Encouragement", included: true, icon: Shield },
+      { text: "Community Support Forum", included: true, icon: Users },
+      { text: "Advanced AI Advisor", included: false, icon: Sparkles },
+      { text: "Autopilot Setup", included: false, icon: Zap },
+      { text: "Unlimited Documents", included: false, icon: FileStack },
     ],
-    cta: "Start DIY Journey",
-    value: "Perfect for self-starters who want the tools",
+    cta: "Start Free Today",
+    value: "No credit card required - start immediately",
   },
   {
-    id: "guided",
-    name: "Guided",
-    price: 997,
-    description: "Personal guidance to implement your debt freedom system",
+    id: "pro",
+    name: "Pro",
+    price: 19,
+    description: "Full automation and AI guidance at coffee-shop prices",
     popular: true,
     features: [
-      { text: "Everything in DIY Kit", included: true, icon: Check },
-      { text: "1-on-1 Setup Call (60 min)", included: true, icon: HeadphonesIcon },
-      { text: "Custom Avalanche Optimization", included: true, icon: Zap },
-      { text: "Bank Autopay Setup Support", included: true, icon: CreditCard },
-      { text: "Quarterly Progress Reviews", included: true, icon: Clock },
-      { text: "Priority Email Support", included: true, icon: Shield },
-      { text: "Cashflow Optimization Audit", included: true, icon: Calculator },
-      { text: "Done-For-You Setup", included: false, icon: Users },
-      { text: "Weekly Check-ins", included: false, icon: Calendar },
+      { text: "Everything in Free", included: true, icon: Check },
+      { text: "Unlimited Document Upload", included: true, icon: FileStack },
+      { text: "Advanced AI Advisor 24/7", included: true, icon: Sparkles },
+      { text: "Set & Forget Autopilot", included: true, icon: Zap },
+      { text: "Bank Autopay Templates", included: true, icon: CreditCard },
+      { text: "Monthly Progress Reports", included: true, icon: Clock },
+      { text: "Cashflow Optimization", included: true, icon: Calculator },
+      { text: "Priority Support", included: true, icon: Shield },
+      { text: "Family Accounts", included: false, icon: Users },
     ],
-    cta: "Get Guided Support",
-    value: "Most popular - get expert help setting up",
+    cta: "Go Pro for $19/mo",
+    value: "Less than a streaming service, changes your life",
   },
   {
-    id: "dfy",
-    name: "Done-For-You",
-    price: 2997,
-    description: "We handle everything - you just watch your debts disappear",
+    id: "family",
+    name: "Family",
+    price: 39,
+    description: "Transform your entire household's financial future together",
     features: [
-      { text: "Everything in Guided", included: true, icon: Check },
-      { text: "Complete Setup Service", included: true, icon: Users },
-      { text: "Bank Integration Setup", included: true, icon: CreditCard },
-      { text: "Weekly Progress Monitoring", included: true, icon: Calendar },
-      { text: "Debt Negotiation Support", included: true, icon: Shield },
-      { text: "Tax Optimization Review", included: true, icon: Calculator },
-      { text: "Investment Transition Plan", included: true, icon: TrendingUp },
-      { text: "Lifetime Updates", included: true, icon: Sparkles },
-      { text: "White-Glove Service", included: true, icon: Shield },
+      { text: "Everything in Pro", included: true, icon: Check },
+      { text: "5 Family Member Accounts", included: true, icon: Users },
+      { text: "Family Dashboard View", included: true, icon: Shield },
+      { text: "Shared Goals & Milestones", included: true, icon: TrendingUp },
+      { text: "Kids Financial Education", included: true, icon: Sparkles },
+      { text: "Estate Planning Tools", included: true, icon: Calculator },
+      { text: "Tax Strategy Guidance", included: true, icon: CreditCard },
+      { text: "VIP Support Line", included: true, icon: HeadphonesIcon },
+      { text: "Annual Strategy Sessions", included: true, icon: Calendar },
     ],
-    cta: "Get Everything Done",
-    value: "For busy professionals who want results now",
+    cta: "Protect Your Family - $39/mo",
+    value: "Build generational wealth, break the debt cycle",
   },
 ];
 
@@ -155,8 +155,8 @@ export default function Pricing() {
           Choose Your Path to Debt Freedom
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          From DIY tools to done-for-you service, we have the right solution for your journey.
-          No monthly fees - just one-time investment in your financial future.
+          Start free. Upgrade when ready. Cancel anytime. Everyone deserves financial freedom,
+          regardless of their current situation. There's always hope, always a plan.
         </p>
       </div>
 
@@ -217,8 +217,8 @@ export default function Pricing() {
               <CardTitle className="text-2xl">{tier.name}</CardTitle>
               <CardDescription className="mt-2">{tier.description}</CardDescription>
               <div className="mt-4">
-                <span className="text-4xl font-bold">${tier.price}</span>
-                <span className="text-muted-foreground ml-2">one-time</span>
+                <span className="text-4xl font-bold">{tier.price === 0 ? 'Free' : `$${tier.price}`}</span>
+                {tier.price > 0 && <span className="text-muted-foreground ml-2">/month</span>}
               </div>
               <p className="text-sm text-primary mt-2">{tier.value}</p>
             </CardHeader>
@@ -271,17 +271,18 @@ export default function Pricing() {
         <CardContent>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold mb-2">Why one-time instead of monthly?</h3>
+              <h3 className="font-semibold mb-2">Why is there a free option?</h3>
               <p className="text-sm text-muted-foreground">
-                We believe in solving your problem once, not creating a recurring expense.
-                Monthly subscriptions like Monarch Money keep you dependent. We want you free.
+                Everyone deserves a chance at financial freedom. The free tier gives you real tools 
+                and a real plan. No tricks, no "trial period" - it's genuinely free forever.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">What's the difference between tiers?</h3>
+              <h3 className="font-semibold mb-2">What if I'm too deep in debt?</h3>
               <p className="text-sm text-muted-foreground">
-                DIY gives you the tools. Guided adds personal support. Done-For-You means
-                we handle everything while you focus on your life.
+                There's no such thing. We've helped people with $200K debt on minimum wage find hope.
+                Even if traditional payoff seems impossible, we'll explore ALL options - settlement, 
+                consolidation, even strategic bankruptcy. There's ALWAYS a path forward.
               </p>
             </div>
             <div>
