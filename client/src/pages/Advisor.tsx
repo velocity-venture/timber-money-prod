@@ -58,12 +58,16 @@ export default function Advisor() {
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <h4 className="font-semibold text-sm">Credit & Debt</h4>
+              <h4 className="font-semibold text-sm">Credit Score Expertise</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Credit score improvement strategies</li>
-                <li>• Debt consolidation recommendations</li>
-                <li>• Credit report error identification</li>
-                <li>• Optimal payoff strategies</li>
+                <li>• Rapid credit score improvement (450→750+)</li>
+                <li>• Remove negative items & collections</li>
+                <li>• Pay-for-delete negotiation strategies</li>
+                <li>• Credit utilization optimization</li>
+                <li>• Goodwill letter templates</li>
+                <li>• Post-bankruptcy credit rebuilding</li>
+                <li>• Medical debt removal tactics</li>
+                <li>• Rapid rescoring strategies</li>
               </ul>
             </div>
             <div className="space-y-2">
