@@ -87,9 +87,9 @@ export default function Dashboard() {
     return (
       <div className="space-y-6" data-testid="page-dashboard">
         <div>
-          <h1 className="text-3xl font-bold">Your Money Foundation System™</h1>
+          <h1 className="text-3xl font-bold">Your Autopilot Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Turn your shoebox of bills into an automated payoff system
+            Watch your shoebox transform into organized, automated finances
           </p>
         </div>
 
@@ -116,9 +116,9 @@ export default function Dashboard() {
   return (
     <div className="space-y-6" data-testid="page-dashboard">
       <div>
-        <h1 className="text-3xl font-bold">Your Money Foundation System™</h1>
+        <h1 className="text-3xl font-bold">Your Autopilot Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          Your automated debt payoff system is active - no daily logins required
+          Your finances are on autopilot - everything running automatically
         </p>
       </div>
 

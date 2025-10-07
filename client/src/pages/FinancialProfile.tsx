@@ -36,9 +36,9 @@ export default function FinancialProfile() {
   return (
     <div className="space-y-6" data-testid="page-profile">
       <div>
-        <h1 className="text-3xl font-bold">Financial Profile</h1>
+        <h1 className="text-3xl font-bold">Your Complete Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          Complete overview of your assets, liabilities, and creditworthiness
+          From shoebox chaos to clear visibility - everything organized in one place
         </p>
       </div>
 

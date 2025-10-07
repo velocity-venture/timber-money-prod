@@ -23,9 +23,9 @@ export default function Landing() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-              <Brain className="w-5 h-5 text-primary-foreground" />
+              <FileText className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-chart-2 bg-clip-text text-transparent">MoneyMind AI</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-chart-2 bg-clip-text text-transparent">Shoebox to Autopilot</span>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild data-testid="button-pricing-header">
@@ -54,15 +54,15 @@ export default function Landing() {
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-chart-2/10 blur-3xl opacity-50 -z-10"></div>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 backdrop-blur-sm border border-primary/20 text-primary text-sm font-medium mb-8 animate-fade-in">
             <Bot className="w-4 h-4 animate-pulse" />
-            <span>Your AI Financial Manager</span>
+            <span>From Paper Chaos to Payment Power</span>
           </div>
           <h1 className="text-5xl md:text-7xl font-bold mb-6 max-w-4xl mx-auto bg-gradient-to-r from-foreground via-primary/90 to-foreground bg-clip-text text-transparent animate-fade-in">
-            Let AI Manage Your Money While You Live Your Life
+            Turn Your Shoebox Into a Dashboard
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed animate-fade-in-delay">
-            Your personal AI financial assistant automatically manages bills, 
-            tracks spending, reduces debt, and grows wealth — all with minimal 
-            input from you. Set it once and let our expert AI handle the rest.
+            Transform that bag of bills into a set-and-forget money system.
+            Our AI turns your messy paperwork into automated financial management
+            — bills paid, debt reduced, wealth growing. All on autopilot.
           </p>
           <div className="flex gap-4 justify-center animate-fade-in-delay-2">
             <Button size="lg" className="shadow-xl hover:shadow-2xl transition-shadow" asChild data-testid="button-get-started">
@@ -88,13 +88,13 @@ export default function Landing() {
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center mb-4 shadow-md">
                 <FileText className="w-6 h-6 text-primary-foreground" />
               </div>
-              <CardTitle className="text-xl">Simple Setup</CardTitle>
+              <CardTitle className="text-xl">Dump Your Shoebox</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
-                Upload or snap photos of your financial documents. 
-                Our AI instantly builds your complete financial profile — 
-                bank accounts, debts, investments, everything.
+                Upload or snap photos of that pile of bills and statements. 
+                Our AI instantly digitizes and organizes everything — 
+                turning your paper chaos into clear data.
               </p>
             </CardContent>
           </Card>
@@ -108,13 +108,13 @@ export default function Landing() {
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-chart-2 to-chart-2/80 flex items-center justify-center mb-4 shadow-md">
                 <Bot className="w-6 h-6 text-white" />
               </div>
-              <CardTitle className="text-xl">AI Autopilot</CardTitle>
+              <CardTitle className="text-xl">Deploy on Autopilot</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
-                Your AI manager monitors bills, optimizes payments, 
-                tracks spending, and works 24/7 to improve your 
-                financial health — no daily input needed.
+                Set it once and let it work. Your money moves itself — 
+                bills paid automatically, extra funds allocated strategically, 
+                all running 24/7 without daily management.
               </p>
             </CardContent>
           </Card>
@@ -125,13 +125,13 @@ export default function Landing() {
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-chart-3 to-chart-3/80 flex items-center justify-center mb-4 shadow-md">
                 <Target className="w-6 h-6 text-white" />
               </div>
-              <CardTitle className="text-xl">Reach Your Goals</CardTitle>
+              <CardTitle className="text-xl">Breathe Easy</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground leading-relaxed">
-                Whether it's eliminating debt, building savings, or 
-                growing wealth, your AI works relentlessly toward 
-                your financial freedom.
+                Watch your dashboard transform — debts shrinking, 
+                savings growing, everything handled. From overwhelm 
+                to on-time, automatically.
               </p>
             </CardContent>
           </Card>

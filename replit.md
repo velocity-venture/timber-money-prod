@@ -1,7 +1,7 @@
-# MoneyMind AI - Your Automated Money Management Platform
+# Shoebox to Autopilot - Turn Your Bag of Bills Into a Dashboard
 
 ## Overview
-MoneyMind AI is a comprehensive AI-powered financial management platform that acts as your 24/7 money manager, handling everything from bill monitoring to wealth building with minimal user input. Built with React, Express, PostgreSQL, and OpenAI, the app offers bank-level security while automating your entire financial life - not just debt management.
+Shoebox to Autopilot transforms your messy pile of bills and financial documents into an automated money management system. Built with React, Express, PostgreSQL, and OpenAI, the app takes you from paper chaos to payment power with a simple 3-step process: Dump, Digitize, Deploy. Set it once and let it work for you.
 
 ## Recent Changes (January 2025)
 - ✅ Integrated Replit Auth for secure user authentication (supports Google, GitHub, email/password)
@@ -12,11 +12,12 @@ MoneyMind AI is a comprehensive AI-powered financial management platform that ac
 - ✅ Created landing page, pricing page, privacy policy, and terms of service
 - ✅ Integrated frontend with authentication system
 - ✅ Set up document upload with AI-powered analysis
-- ✅ **MAJOR REBRAND**: Repositioned from "Debt Freedom" to "MoneyMind AI" - comprehensive money management
+- ✅ **MAJOR REBRAND**: Repositioned from "Debt Freedom" to "MoneyMind AI" - comprehensive money management  
+- ✅ **FINAL REBRAND**: Updated from "MoneyMind AI" to "Shoebox to Autopilot" - transformation-focused messaging
 - ✅ Updated all messaging to emphasize automated financial management, not just debt reduction
 - ✅ Added prominent legal disclaimers for informational purposes only
 - ✅ Enhanced mobile experience with photo capture capabilities for document upload
-- ✅ Rebranded UI to highlight 24/7 AI automation and broader financial features
+- ✅ Rebranded UI to highlight the journey from chaos to automated management
 
 ## Project Architecture
 

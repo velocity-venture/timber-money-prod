@@ -17,7 +17,6 @@ import {
   Settings,
   CreditCard,
   Crown,
-  Brain,
   Bot,
   Wallet,
 } from "lucide-react";
@@ -72,11 +71,11 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-            <Brain className="w-5 h-5 text-primary-foreground" />
+            <FileText className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="font-semibold text-base">MoneyMind AI</h2>
-            <p className="text-xs text-muted-foreground">Your AI Money Manager</p>
+            <h2 className="font-semibold text-base">Shoebox to Autopilot</h2>
+            <p className="text-xs text-muted-foreground">Set it once. Let it work.</p>
           </div>
         </div>
       </SidebarHeader>
