@@ -376,6 +376,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete all user data
+  app.delete("/api/user/data", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Delete all user data except the account itself
+      await storage.deleteAllUserData(userId);
+      
+      res.json({ success: true, message: "All your financial data has been deleted" });
+    } catch (error: any) {
+      console.error("Error deleting user data:", error);
+      res.status(500).json({ message: "Failed to delete user data: " + error.message });
+    }
+  });
+
   // Debt payoff plan
   app.post("/api/payoff-plan", isAuthenticated, async (req: any, res) => {
     try {

@@ -62,6 +62,9 @@ export interface IStorage {
   // Chat operations
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatHistory(userId: string, limit?: number): Promise<ChatMessage[]>;
+  
+  // Data deletion
+  deleteAllUserData(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -224,6 +227,19 @@ export class DatabaseStorage implements IStorage {
       .where(eq(chatMessages.userId, userId))
       .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
+  }
+  
+  // Delete all user data
+  async deleteAllUserData(userId: string): Promise<void> {
+    // Delete in order of dependencies (reverse of foreign keys)
+    await db.delete(chatMessages).where(eq(chatMessages.userId, userId));
+    await db.delete(documents).where(eq(documents.userId, userId));
+    await db.delete(debts).where(eq(debts.userId, userId));
+    await db.delete(assets).where(eq(assets.userId, userId));
+    await db.delete(financialProfiles).where(eq(financialProfiles.userId, userId));
+    // Note: We keep the user account itself for auth purposes
+    // If you want to fully delete, uncomment the next line:
+    // await db.delete(users).where(eq(users.id, userId));
   }
 }
 

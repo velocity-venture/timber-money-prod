@@ -18,6 +18,7 @@ import Privacy from "@/pages/Privacy";
 import PrivacySettings from "@/pages/PrivacySettings";
 import Terms from "@/pages/Terms";
 import Security from "@/pages/Security";
+import Settings from "@/pages/Settings";
 import Checkout from "@/pages/checkout";
 import Subscribe from "@/pages/subscribe";
 import PaymentSuccess from "@/pages/payment-success";
@@ -60,6 +61,7 @@ function Router() {
           <Route path="/privacy" component={Privacy} />
           <Route path="/privacy-settings" component={PrivacySettings} />
           <Route path="/security" component={Security} />
+          <Route path="/settings" component={Settings} />
           <Route path="/terms" component={Terms} />
         </>
       )}
