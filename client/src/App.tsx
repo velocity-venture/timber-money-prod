@@ -17,6 +17,7 @@ import Pricing from "@/pages/Pricing";
 import Privacy from "@/pages/Privacy";
 import PrivacySettings from "@/pages/PrivacySettings";
 import Terms from "@/pages/Terms";
+import Security from "@/pages/Security";
 import Checkout from "@/pages/checkout";
 import Subscribe from "@/pages/subscribe";
 import PaymentSuccess from "@/pages/payment-success";
@@ -41,6 +42,7 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/privacy" component={Privacy} />
+          <Route path="/security" component={Security} />
           <Route path="/terms" component={Terms} />
         </>
       ) : (
@@ -57,6 +59,7 @@ function Router() {
           <Route path="/subscription-success" component={SubscriptionSuccess} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/privacy-settings" component={PrivacySettings} />
+          <Route path="/security" component={Security} />
           <Route path="/terms" component={Terms} />
         </>
       )}
