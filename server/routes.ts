@@ -57,6 +57,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "No file uploaded" });
         }
 
+        // Check if user is a paid customer (has active subscription)
+        const user = await storage.getUser(userId);
+        const isPaidUser = !!user?.stripeSubscriptionId;
+
         // Create document record
         const document = await storage.createDocument({
           userId,
@@ -67,11 +71,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           analysisData: null,
         });
 
-        // Analyze document with AI
+        // Analyze document with AI (using hybrid model)
         const base64Image = file.buffer.toString("base64");
         const analysis = await analyzeFinancialDocument(
           base64Image,
-          documentType
+          documentType,
+          isPaidUser
         );
 
         // Update document with analysis
@@ -329,18 +334,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: message,
       });
 
+      // Check if user is a paid customer (has active subscription)
+      const user = await storage.getUser(userId);
+      const isPaidUser = !!user?.stripeSubscriptionId;
+
       // Get user's financial context
       const debts = await storage.getDebtsByUser(userId);
       const assets = await storage.getAssetsByUser(userId);
       const profile = await storage.getFinancialProfile(userId);
 
-      // Generate AI response
+      // Generate AI response (using hybrid model)
       const response = await generateFinancialAdvice(message, {
         debts,
         assets,
         income: profile?.monthlyIncome ? parseFloat(profile.monthlyIncome) : undefined,
         creditScore: profile?.creditScore || undefined,
-      });
+      }, isPaidUser);
 
       // Save AI response
       await storage.createChatMessage({
@@ -371,6 +380,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/payoff-plan", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      
+      // Check if user is a paid customer (has active subscription)
+      const user = await storage.getUser(userId);
+      const isPaidUser = !!user?.stripeSubscriptionId;
+      
       const debts = await storage.getDebtsByUser(userId);
       const { monthlyBudget } = req.body;
 
@@ -382,7 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           minimumPayment: parseFloat(d.minimumPayment),
         })),
         monthlyBudget,
-      });
+      }, isPaidUser);
 
       res.json(plan);
     } catch (error: any) {
