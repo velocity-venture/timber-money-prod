@@ -1,4 +1,8 @@
-// Implementation combining Replit Auth and Stripe integrations
+/**
+ * Copyright (c) 2025 Shoebox to Autopilot. All Rights Reserved.
+ * API Routes with integrated security monitoring
+ */
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -11,6 +15,7 @@ import {
 import multer from "multer";
 import { z } from "zod";
 import Stripe from "stripe";
+import { trackRequest, checkSuspiciousPatterns } from "./security-monitor";
 
 // Set up file upload handling
 const upload = multer({

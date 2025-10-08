@@ -1,5 +1,14 @@
-// Implementation based on blueprint: javascript_openai
-// Hybrid model: GPT-4o for paid users, GPT-4o-mini for free users
+/**
+ * Copyright (c) 2025 Shoebox to Autopilot. All Rights Reserved.
+ * PROPRIETARY AND CONFIDENTIAL
+ * 
+ * This file contains trade secrets and proprietary business logic.
+ * Unauthorized copying, reverse engineering, or distribution is strictly prohibited.
+ * 
+ * Implementation based on blueprint: javascript_openai
+ * Hybrid model: GPT-4o for paid users, GPT-4o-mini for free users
+ */
+
 import OpenAI from "openai";
 
 const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
