@@ -12,15 +12,15 @@ export default function Terms() {
         <CardContent className="prose prose-sm max-w-none p-8 dark:prose-invert">
           <h2>Agreement to Terms</h2>
           <p>
-            By accessing or using Debt Freedom, you agree to be bound by these
+            By accessing or using Shoebox to Autopilot, you agree to be bound by these
             Terms of Service. If you disagree with any part of these terms,
             you may not access the service.
           </p>
 
           <h3>Service Description</h3>
           <p>
-            Debt Freedom provides AI-powered financial analysis and debt
-            management tools. Our service analyzes your uploaded financial
+            Shoebox to Autopilot provides AI-powered financial analysis and automated
+            money management tools. Our service analyzes your uploaded financial
             documents to provide personalized insights, debt payoff strategies,
             and financial advice.
           </p>
@@ -28,7 +28,7 @@ export default function Terms() {
           <h3>Important Disclaimers</h3>
           <p>
             <strong>Not Financial Advice:</strong> The information and
-            recommendations provided by Debt Freedom are for informational
+            recommendations provided by Shoebox to Autopilot are for informational
             purposes only and do not constitute professional financial,
             investment, or legal advice. You should consult with a qualified
             financial advisor for personalized advice.
@@ -55,7 +55,7 @@ export default function Terms() {
           </ul>
 
           <h3>Acceptable Use</h3>
-          <p>You may not use Debt Freedom to:</p>
+          <p>You may not use Shoebox to Autopilot to:</p>
           <ul>
             <li>Violate any laws or regulations</li>
             <li>Infringe on others' intellectual property rights</li>
@@ -86,8 +86,8 @@ export default function Terms() {
 
           <h3>Intellectual Property</h3>
           <p>
-            All content, features, and functionality of Debt Freedom are owned
-            by us and protected by copyright, trademark, and other laws. You
+            All content, features, and functionality of Shoebox to Autopilot are owned
+            by Velocity Venture Holdings, LLC and protected by copyright, trademark, and other laws. You
             retain ownership of your financial data.
           </p>
 
@@ -101,7 +101,7 @@ export default function Terms() {
 
           <h3>Limitation of Liability</h3>
           <p>
-            To the maximum extent permitted by law, Debt Freedom shall not be
+            To the maximum extent permitted by law, Shoebox to Autopilot and Velocity Venture Holdings, LLC shall not be
             liable for any indirect, incidental, special, consequential, or
             punitive damages, or any loss of profits or revenues, whether
             incurred directly or indirectly, or any loss of data, use, goodwill,
@@ -119,7 +119,7 @@ export default function Terms() {
           <h3>Contact</h3>
           <p>
             Questions about these Terms should be sent to{" "}
-            <a href="mailto:legal@debtfreedom.app">legal@debtfreedom.app</a>.
+            <a href="mailto:legal@shoeboxtoautopilot.com">legal@shoeboxtoautopilot.com</a>.
           </p>
         </CardContent>
       </Card>

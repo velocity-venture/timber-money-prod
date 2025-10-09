@@ -207,7 +207,7 @@ export default function Pricing() {
           Limited Time: Launch Pricing
         </Badge>
         <h1 className="text-4xl font-bold mb-4">
-          Choose Your Path to Debt Freedom
+          Transform Your Financial Future
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Start free. Upgrade when ready. Cancel anytime. Everyone deserves financial freedom,

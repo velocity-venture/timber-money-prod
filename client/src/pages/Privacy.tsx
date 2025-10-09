@@ -12,7 +12,7 @@ export default function Privacy() {
         <CardContent className="prose prose-sm max-w-none p-8 dark:prose-invert">
           <h2>Your Privacy Matters</h2>
           <p>
-            At Debt Freedom, we take your privacy and the security of your
+            At Shoebox to Autopilot, we take your privacy and the security of your
             financial information extremely seriously. This policy explains how
             we handle your data.
           </p>
