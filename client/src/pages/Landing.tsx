@@ -209,7 +209,7 @@ export default function Landing() {
             
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
-                <h3 className="font-bold text-lg text-destructive">What Others Do 😩</h3>
+                <h3 className="font-bold text-lg text-destructive">What Others Do</h3>
                 <div className="space-y-4">
                   <div className="flex gap-3">
                     <div className="w-5 h-5 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -251,7 +251,7 @@ export default function Landing() {
               </div>
 
               <div className="space-y-6">
-                <h3 className="font-bold text-lg text-primary">What We Do ✨</h3>
+                <h3 className="font-bold text-lg text-primary">What We Do</h3>
                 <div className="space-y-4">
                   <div className="flex gap-3">
                     <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
