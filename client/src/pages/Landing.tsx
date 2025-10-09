@@ -41,17 +41,6 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Legal Disclaimer Banner */}
-      <div className="bg-muted/50 border-b border-border py-3">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            <Shield className="w-4 h-4 inline-block mr-2" />
-            <span className="font-medium">Important:</span> This service is for informational purposes only. 
-            Please consult your accountant or trusted tax advisor before implementing any financial suggestions.
-          </p>
-        </div>
-      </div>
-
       <main className="container mx-auto px-4 py-20">
         <section className="text-center mb-24 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-chart-2/10 blur-3xl opacity-50 -z-10"></div>
@@ -74,7 +63,16 @@ export default function Landing() {
                 Get Started Free
               </a>
             </Button>
-            <Button size="lg" variant="outline" className="backdrop-blur-sm" data-testid="button-learn-more">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="backdrop-blur-sm cursor-pointer" 
+              data-testid="button-learn-more"
+              onClick={() => {
+                const featuresSection = document.getElementById('features-section');
+                featuresSection?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               Learn More
             </Button>
           </div>
@@ -137,60 +135,66 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="grid gap-8 md:grid-cols-3 mb-24">
-          <Card className="relative overflow-hidden border-primary/20 shadow-lg hover:shadow-xl transition-shadow duration-300 hover-elevate">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full"></div>
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center mb-4 shadow-md">
-                <FileText className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <CardTitle className="text-xl">Dump Your Shoebox</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
-                Upload or snap photos of that pile of bills and statements. 
-                Our AI instantly digitizes and organizes everything — 
-                turning your paper chaos into clear data.
-              </p>
-            </CardContent>
-          </Card>
+        <section id="features-section" className="grid gap-8 md:grid-cols-3 mb-24">
+          <a href="/api/login" className="block cursor-pointer" data-testid="card-dump-shoebox">
+            <Card className="relative overflow-hidden border-primary/20 shadow-lg hover:shadow-xl transition-all duration-300 hover-elevate h-full">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full"></div>
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center mb-4 shadow-md">
+                  <FileText className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <CardTitle className="text-xl">Dump Your Shoebox</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  Upload or snap photos of that pile of bills and statements. 
+                  Our AI instantly digitizes and organizes everything — 
+                  turning your paper chaos into clear data.
+                </p>
+              </CardContent>
+            </Card>
+          </a>
 
-          <Card className="relative overflow-hidden border-chart-2/20 shadow-lg hover:shadow-xl transition-shadow duration-300 hover-elevate md:scale-105">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-chart-2/10 to-transparent rounded-bl-full"></div>
-            <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-primary to-chart-2 text-primary-foreground text-xs font-medium rounded-full">
-              Set & Forget
-            </div>
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-chart-2 to-chart-2/80 flex items-center justify-center mb-4 shadow-md">
-                <Bot className="w-6 h-6 text-white" />
+          <a href="/api/login" className="block cursor-pointer" data-testid="card-deploy-autopilot">
+            <Card className="relative overflow-hidden border-chart-2/20 shadow-lg hover:shadow-xl transition-all duration-300 hover-elevate md:scale-105 h-full">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-chart-2/10 to-transparent rounded-bl-full"></div>
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-primary to-chart-2 text-primary-foreground text-xs font-medium rounded-full">
+                Set & Forget
               </div>
-              <CardTitle className="text-xl">Deploy on Autopilot</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
-                Set it once and let it work. Your money moves itself — 
-                bills paid automatically, extra funds allocated strategically, 
-                all running 24/7 without daily management.
-              </p>
-            </CardContent>
-          </Card>
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-chart-2 to-chart-2/80 flex items-center justify-center mb-4 shadow-md">
+                  <Bot className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle className="text-xl">Deploy on Autopilot</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  Set it once and let it work. Your money moves itself — 
+                  bills paid automatically, extra funds allocated strategically, 
+                  all running 24/7 without daily management.
+                </p>
+              </CardContent>
+            </Card>
+          </a>
 
-          <Card className="relative overflow-hidden border-chart-3/20 shadow-lg hover:shadow-xl transition-shadow duration-300 hover-elevate">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-chart-3/10 to-transparent rounded-bl-full"></div>
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-chart-3 to-chart-3/80 flex items-center justify-center mb-4 shadow-md">
-                <Target className="w-6 h-6 text-white" />
-              </div>
-              <CardTitle className="text-xl">Breathe Easy</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground leading-relaxed">
-                Watch your dashboard transform — debts shrinking, 
-                savings growing, everything handled. From overwhelm 
-                to on-time, automatically.
-              </p>
-            </CardContent>
-          </Card>
+          <a href="/api/login" className="block cursor-pointer" data-testid="card-breathe-easy">
+            <Card className="relative overflow-hidden border-chart-3/20 shadow-lg hover:shadow-xl transition-all duration-300 hover-elevate h-full">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-chart-3/10 to-transparent rounded-bl-full"></div>
+              <CardHeader>
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-chart-3 to-chart-3/80 flex items-center justify-center mb-4 shadow-md">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+                <CardTitle className="text-xl">Breathe Easy</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  Watch your dashboard transform — debts shrinking, 
+                  savings growing, everything handled. From overwhelm 
+                  to on-time, automatically.
+                </p>
+              </CardContent>
+            </Card>
+          </a>
         </section>
 
         <section className="mb-20">
@@ -299,7 +303,16 @@ export default function Landing() {
               Pricing
             </a>
           </div>
-          <p>&copy; 2025 Shoebox to Autopilot. All rights reserved.</p>
+          <p className="mb-3">&copy; 2025 Shoebox to Autopilot. All rights reserved.</p>
+          
+          {/* Legal Disclaimer - now at bottom, less conspicuous */}
+          <div className="mt-6 pt-6 border-t border-border/50 max-w-3xl mx-auto">
+            <p className="text-xs text-muted-foreground/80">
+              <Shield className="w-3 h-3 inline-block mr-1" />
+              <span className="font-medium">Important:</span> This service is for informational purposes only. 
+              Please consult your accountant or trusted tax advisor before implementing any financial suggestions.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
