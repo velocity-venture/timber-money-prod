@@ -1063,7 +1063,7 @@ export default function Pitch() {
                         <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
                           <strong>Operating Costs:</strong> 35% gross margin Year 1 → 65% Year 5
-                          <div className="text-xs text-muted-foreground mt-1">SaaS benchmarks: 65-75% margins at scale (SaaS Capital)</div>
+                          <div className="text-xs text-muted-foreground mt-1">AI costs declining 30% annually as models improve + scale economies</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
@@ -1084,9 +1084,12 @@ export default function Pitch() {
                   </div>
                 </Card>
 
-                <div className="text-center">
+                <div className="text-center space-y-2">
                   <p className="text-xl text-foreground font-semibold">
                     Path to $66M ARR by 2030 with 65% EBITDA margins
+                  </p>
+                  <p className="text-xs text-muted-foreground italic">
+                    *Projections based on industry benchmarks and conservative growth assumptions. Actual results may vary.
                   </p>
                 </div>
               </div>
