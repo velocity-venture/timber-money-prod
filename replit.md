@@ -3,7 +3,7 @@
 ## Overview
 Shoebox to Autopilot transforms your messy pile of bills and financial documents into an automated money management system. Built with React, Express, PostgreSQL, and OpenAI, the app takes you from paper chaos to payment power with a simple 3-step process: Dump, Digitize, Deploy. Set it once and let it work for you.
 
-## Recent Changes (January 2025)
+## Recent Changes (October 2025)
 - ✅ Integrated Replit Auth for secure user authentication (supports Google, GitHub, email/password)
 - ✅ Set up Stripe for subscription-based monetization
 - ✅ Created comprehensive database schema with Drizzle ORM
@@ -21,6 +21,8 @@ Shoebox to Autopilot transforms your messy pile of bills and financial documents
 - ✅ **COMPETITIVE POSITIONING**: Added explicit competitor comparison showcasing our "true autopilot" advantage
 - ✅ **COLOR REFRESH**: Updated to bright emerald green primary colors for more inviting appearance
 - ✅ **OWNERSHIP BRANDING**: All assets now properly reflect Velocity Venture Holdings, LLC copyright
+- ✅ **INVESTOR PITCH DECK**: Created comprehensive 11-slide pitch deck at /pitch with problem, solution, market ($12.5B TAM), business model, GTM strategy, competitive analysis, and financials
+- ✅ **PITCH DECK TIMELINE ACCURACY**: Updated all dates to reflect November 2025 MVP launch - no fictional metrics, accurate 2026-2030 projections, correct quarterly milestones (Q4 2025 - Q1 2027)
 
 ## Project Architecture
 
