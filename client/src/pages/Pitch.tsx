@@ -251,18 +251,24 @@ export default function Pitch() {
               
               <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
                 <Card className="p-8 text-center space-y-4">
-                  <div className="text-5xl font-bold text-primary">$12.5B</div>
+                  <div className="text-5xl font-bold text-primary">$25B</div>
                   <div className="text-xl font-semibold">Total Addressable Market</div>
                   <div className="text-muted-foreground">
-                    Personal finance software market (2025)
+                    Personal finance app market (2025)
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Source: Business Research Insights 2025
                   </div>
                 </Card>
 
                 <Card className="p-8 text-center space-y-4">
-                  <div className="text-5xl font-bold text-primary">23%</div>
+                  <div className="text-5xl font-bold text-primary">18-20%</div>
                   <div className="text-xl font-semibold">Annual Growth Rate</div>
                   <div className="text-muted-foreground">
-                    CAGR through 2030 driven by AI adoption
+                    CAGR through 2033 driven by AI adoption
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Source: Market Research Future 2025
                   </div>
                 </Card>
 
@@ -599,9 +605,12 @@ export default function Pitch() {
                   </div>
                 </Card>
 
-                <div className="text-center">
+                <div className="text-center space-y-2">
                   <p className="text-lg text-foreground font-semibold">
                     Blended CAC: $23 | LTV: $600 | LTV:CAC Ratio: 26:1
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Industry benchmark for early-stage fintech CAC: $200-$400 (Source: First Page Sage 2025)
                   </p>
                 </div>
               </div>
@@ -1024,25 +1033,28 @@ export default function Pitch() {
                 </div>
 
                 <Card className="p-8 bg-primary/5 border-primary/20">
-                  <h3 className="text-2xl font-bold mb-6">Key Assumptions</h3>
+                  <h3 className="text-2xl font-bold mb-6">Key Assumptions & Industry Benchmarks</h3>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
                           <strong>User Growth:</strong> 350% YoY growth in 2026-2028, slowing to 150% by 2030
+                          <div className="text-xs text-muted-foreground mt-1">Market growing 18-20% CAGR (Market Research Future 2025)</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <strong>Conversion Rate:</strong> 50% free-to-paid (conservative industry benchmark)
+                          <strong>Conversion Rate:</strong> 50% free-to-paid (conservative)
+                          <div className="text-xs text-muted-foreground mt-1">Fintech avg: 3-5%, AI SaaS can achieve 15-30%</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <strong>Annual Plan Mix:</strong> 70% of paid users on annual plans (2-month discount)
+                          <strong>Annual Plan Mix:</strong> 70% of paid users on annual plans
+                          <div className="text-xs text-muted-foreground mt-1">17% discount (2 months free) drives annual adoption</div>
                         </div>
                       </div>
                     </div>
@@ -1050,19 +1062,22 @@ export default function Pitch() {
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <strong>Operating Costs:</strong> 35% gross margin in Year 1, improving to 65% by Year 5
+                          <strong>Operating Costs:</strong> 35% gross margin Year 1 → 65% Year 5
+                          <div className="text-xs text-muted-foreground mt-1">SaaS benchmarks: 65-75% margins at scale (SaaS Capital)</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <strong>CAC Efficiency:</strong> Blended $23 CAC maintained through organic + paid mix
+                          <strong>CAC Efficiency:</strong> Blended $23 CAC (organic-heavy)
+                          <div className="text-xs text-muted-foreground mt-1">Industry avg fintech CAC: $1,450 (First Page Sage 2025)</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <strong>AI Costs:</strong> Decreasing 30% annually as OpenAI pricing improves
+                          <strong>LTV:CAC Target:</strong> 3:1 to 4:1 ratio
+                          <div className="text-xs text-muted-foreground mt-1">Industry standard for sustainable SaaS growth</div>
                         </div>
                       </div>
                     </div>
@@ -1092,12 +1107,12 @@ export default function Pitch() {
                         Seed Round
                       </Badge>
                     </div>
-                    <h3 className="text-6xl font-bold text-primary mb-4">$2.5M</h3>
+                    <h3 className="text-6xl font-bold text-primary mb-4">$750K</h3>
                     <p className="text-2xl text-muted-foreground">
-                      Pre-money valuation: <span className="text-foreground font-semibold">$10M</span>
+                      Pre-money valuation: <span className="text-foreground font-semibold">$5M</span>
                     </p>
                     <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                      Equity offered: <span className="text-foreground font-semibold">20%</span> | 
+                      Equity offered: <span className="text-foreground font-semibold">15%</span> | 
                       Target close: <span className="text-foreground font-semibold">Q4 2025</span>
                     </p>
                   </div>
@@ -1109,53 +1124,59 @@ export default function Pitch() {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold">Product Development</span>
-                          <span className="text-primary font-bold">40% ($1M)</span>
+                          <span className="font-semibold">Customer Acquisition</span>
+                          <span className="text-primary font-bold">45% ($340K)</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: '40%' }}></div>
+                          <div className="h-full bg-primary" style={{ width: '45%' }}></div>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Mobile apps, AI improvements, advanced features
+                          Paid ads, content marketing, influencer partnerships
                         </p>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold">Marketing & Growth</span>
-                          <span className="text-primary font-bold">35% ($875K)</span>
+                          <span className="font-semibold">Product & Tech</span>
+                          <span className="text-primary font-bold">20% ($150K)</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: '35%' }}></div>
+                          <div className="h-full bg-primary" style={{ width: '20%' }}></div>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Paid acquisition, content marketing, influencer partnerships
+                          Mobile apps (leveraging AI dev tools like Replit, Cursor), enhancements
+                        </p>
+                        <p className="text-xs text-muted-foreground italic">
+                          Note: Solo founders can build full SaaS for $25K-$100K using AI copilots (Source: OnGraph, SaaS Capital 2025)
                         </p>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold">Team Expansion</span>
-                          <span className="text-primary font-bold">15% ($375K)</span>
+                          <span className="font-semibold">Operations & Team</span>
+                          <span className="text-primary font-bold">20% ($150K)</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-primary" style={{ width: '20%' }}></div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          1-2 key contractors, cloud infrastructure, compliance
+                        </p>
+                        <p className="text-xs text-muted-foreground italic">
+                          Lean model: 238 unicorn companies started solo (Source: Failory 2025)
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Working Capital</span>
+                          <span className="text-primary font-bold">15% ($110K)</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full overflow-hidden">
                           <div className="h-full bg-primary" style={{ width: '15%' }}></div>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Hire 5 engineers, 2 marketers, 1 product manager
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold">Operations & Infrastructure</span>
-                          <span className="text-primary font-bold">10% ($250K)</span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: '10%' }}></div>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Cloud infrastructure, security, compliance
+                          18-month runway buffer, emergency reserves
                         </p>
                       </div>
                     </div>
@@ -1235,7 +1256,7 @@ export default function Pitch() {
                       </div>
                       <div className="font-bold">Massive Market</div>
                       <div className="text-sm text-muted-foreground">
-                        $12.5B TAM growing 23% annually
+                        $25B TAM growing 18-20% annually
                       </div>
                     </div>
                     <div className="text-center space-y-2">
