@@ -1,0 +1,198 @@
+BEGIN_FILE
+import OpenAI from "openai";
+
+const TIMBER_SYSTEM_PROMPT =
+"You are Timber, the AI behind Timber Money (timbermoney.ai) - Autopilot Money Ops. Mission: From chaos to calm. Set it once; let it work. Principles: calm, clear, shame-free; grade-8 reading level; transparent about scope; privacy first; security: AES-256 at rest, TLS in transit. Household model: Members (Owner, Partner, Teen), Accounts, Receipts, Bills, Budgets, Rules, Exports, Alerts. North Star: MAAH = ≥1 connected account + ≥1 recurring bill detected + ≥1 new receipt processed in 30 days. Pricing: Free (limited), Pro $19/mo ($190/yr), Family $39/mo ($390/yr). If tools exist, you may call: bank_connect, fetch_transactions, ocr_receipt, detect_recurring_bills, create_rule, generate_export, send_nudge, status_check, get_help_article, email_forward_setup. If a tool is missing, return an ACTION_PLAN. Output modes: UI_TEXT, JSON_RESULT, ACTION_PLAN, EXPLAIN. JSON_RESULT schema: {"type":"one_of: bill_detection | rule_suggestion | receipt_summary | export_instruction | onboarding_checklist | reliability_update | safety_refusal | nudge","confidence":0-1,"data":{},"next_best_actions":[{"label":"","tool":"","args":{}}]} Great looks like: fast onboarding; accurate receipts; recurring-bill deltas with calm alerts; safe rule previews; clean exports; family/1099 tips; honest reliability messaging. Safety: no tax/legal/investment advice; refuse out-of-scope actions like making payments; never invent balances; ask for refresh if stale. Copy templates available for Calm Alert, Rule Preview, and Onboarding Checklist. Automated today: receipt ingest/OCR, bill detection, rule execution on new transactions, exports, alerts. Needs confirmation: bank fixes, plan changes, cancellations, payments. Brand: Timber Money. Domains: timbermoney.ai (primary), asktimber.com (email). Tagline: From chaos to calm. Set it once; let it work.";
+
+const TIMBER_ADVICE_PLAYBOOK =
+"ADVICE MODE ADDENDUM — APPROACH & CREDIT SCORE PLAYBOOK\n" +
+"Your approach is:\n" +
+"1. UNWAVERINGLY ENCOURAGING: Celebrate EVERY step users take. Even uploading one document is brave! No matter how bad their situation looks, you've seen worse turn into success stories.\n" +
+"2. ALWAYS HOPEFUL: NEVER leave someone feeling hopeless. If debt seems insurmountable, break it into micro-wins. If income is too low, suggest creative solutions. There's ALWAYS a path forward.\n" +
+"3. EXPERT-LEVEL: Provide sophisticated strategies that normally only wealthy clients receive, but explain them clearly and adapt them to ANY income level.\n" +
+"4. AUTOMATED: Design solutions that require minimal ongoing input - set it and forget it approaches that run on autopilot.\n" +
+"5. COMPREHENSIVE: Consider taxes, investments, debt, budgeting, credit scores, and estate planning holistically - but prioritize based on their current crisis level.\n" +
+"6. REALISTIC YET OPTIMISTIC: If traditional debt payoff would take 40 years, explore debt settlement, bankruptcy as a fresh start, or income-boosting strategies. Frame these as strategic tools, not failures.\n" +
+"\nCREDIT SCORE EXPERTISE:\n" +
+"- People who went from 450 to 750+ in 18 months\n" +
+"- Bankruptcy filers who achieved 700+ scores within 2 years\n" +
+"- Medical debt victims who removed $100K+ in collections\n" +
+"- Identity theft survivors who restored perfect credit\n" +
+"\nYOUR CREDIT SCORE IMPROVEMENT STRATEGIES:\n" +
+"IMMEDIATE (0-30 days): Pay down cards <30% (ideally <10%); AU on aged accounts; request limit increases; pay before statement close.\n" +
+"DISPUTES: Challenge inaccuracies; goodwill letters; pay-for-delete; check statute of limitations.\n" +
+"MIX: Secured cards; credit builder loans; AU strategies; keep oldest cards open.\n" +
+"TIMING: Rate shopping windows; apply when scores peak; time disputes 60 days before big purchases; know drop-off dates.\n" +
+"ADVANCED: Rapid rescore; spouse/family piggyback; business credit; avoid bad repair shops.\n" +
+"CRITICAL RULES: Never pay collections without pay-for-delete; payment history 35%, utilization 30%, length 15%, new 10%, mix 10%; closing cards hurts; expect temporary dips.\n" +
+"\nGuidance: Provide specific point-change estimates, month-by-month plans, and factor links. Celebrate small wins.";
+
+const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+const openai = hasOpenAIKey ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+
+function requireOpenAI() {
+if (!openai) {
+throw new Error("OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable to use AI features.");
+}
+return openai;
+}
+
+export interface FinancialDocumentAnalysis {
+documentType: string;
+extractedData: {
+debts?: Array<{
+creditor: string;
+balance: number;
+apr?: number;
+minimumPayment?: number;
+accountNumber?: string;
+}>;
+assets?: Array<{
+name: string;
+type: string;
+value: number;
+details?: string;
+}>;
+income?: {
+monthlyAmount?: number;
+frequency?: string;
+source?: string;
+};
+creditScore?: number;
+creditUtilization?: number;
+paymentHistory?: string;
+};
+summary: string;
+recommendations?: string[];
+}
+
+export async function analyzeFinancialDocument(
+base64Image: string,
+documentType: string,
+isPaidUser: boolean = false
+): Promise {
+const client = requireOpenAI();
+const model = isPaidUser ? "gpt-4o" : "gpt-4o-mini";
+
+const systemPrompt = TIMBER_SYSTEM_PROMPT;
+
+try {
+const response = await client.chat.completions.create({
+model,
+messages: [
+{ role: "system", content: systemPrompt },
+{
+role: "user",
+content: [
+{
+type: "text",
+text:
+Analyze this ${documentType} document and extract all financial data.  +
+Respond with JSON in this format: { "documentType": string, "extractedData": {...}, "summary": string, "recommendations": string[] }.  +
+For document type "${documentType}", extract:  +
+- Bank statements: balances, transactions, income deposits;  +
+- Credit cards: balance, APR, minimum payment, credit limit, transactions;  +
+- Loans: balance, interest rate, monthly payment, original amount;  +
+- Credit reports: score, payment history, utilization, accounts;  +
+- Investments: account value, holdings, performance;  +
+- Pay stubs: gross, net, frequency, deductions.  +
+Amounts as numbers (no $). APR as percent (e.g., 18.99).
+},
+{
+type: "image_url",
+image_url: { url: data:image/jpeg;base64,${base64Image} }
+}
+]
+}
+],
+response_format: { type: "json_object" },
+max_completion_tokens: 4096
+});
+
+const result = JSON.parse(response.choices[0].message.content || "{}");
+return result as FinancialDocumentAnalysis;
+} catch (error: any) {
+throw new Error("Failed to analyze document: " + error.message);
+}
+}
+
+export async function generateFinancialAdvice(
+question: string,
+userContext: {
+debts?: any[];
+assets?: any[];
+income?: number;
+creditScore?: number;
+},
+isPaidUser: boolean = false
+): Promise {
+const client = requireOpenAI();
+const model = isPaidUser ? "gpt-4o" : "gpt-4o-mini";
+const contextStr = JSON.stringify(userContext, null, 2);
+
+try {
+const response = await client.chat.completions.create({
+model,
+messages: [
+{ role: "system", content: ${TIMBER_SYSTEM_PROMPT}\n\n${TIMBER_ADVICE_PLAYBOOK} },
+{
+role: "user",
+content: User's financial context:\n${contextStr}\n\nUser's question: ${question}
+}
+],
+max_completion_tokens: 2048
+});
+
+return response.choices[0].message.content || "Unable to generate advice.";
+} catch (error: any) {
+throw new Error("Failed to generate advice: " + error.message);
+}
+}
+
+export async function createDebtPayoffPlan(
+data: {
+debts: Array<{
+creditor: string;
+balance: number;
+apr: number;
+minimumPayment: number;
+}>;
+monthlyBudget: number;
+},
+isPaidUser: boolean = false
+): Promise<{
+strategies: any[];
+timeline: any[];
+recommendations: string[];
+}> {
+const client = requireOpenAI();
+const model = isPaidUser ? "gpt-4o" : "gpt-4o-mini";
+
+try {
+const response = await client.chat.completions.create({
+model,
+messages: [
+{ role: "system", content: TIMBER_SYSTEM_PROMPT },
+{
+role: "user",
+content:
+Create a debt payoff plan for:\n +
+Debts: ${JSON.stringify(data.debts)}\n +
+Monthly Budget: ${data.monthlyBudget}\n\n +
+Provide a JSON object with:\n +
+{"strategies": [{"name": string, "method": string, "debtFreeMonths": number, "totalInterest": number, "monthlyPayment": number, "description": string, "emotionalBenefit": string }],\n +
+"timeline": [{"month": number, "remainingBalance": number, "totalPaid": number, "milestone": string }],\n +
+"recommendations": string[] }
+}
+],
+response_format: { type: "json_object" },
+max_completion_tokens: 4096
+});
+
+const result = JSON.parse(response.choices[0].message.content || "{}");
+return result;
+} catch (error: any) {
+throw new Error("Failed to create payoff plan: " + error.message);
+}
+}
+END_FILE

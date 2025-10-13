@@ -408,15 +408,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { monthlyBudget } = req.body;
 
       const plan = await createDebtPayoffPlan(
-        debts.map((d) => ({
-          id: parseInt(d.id),
-          creditor: d.creditor,
-          currentBalance: d.currentBalance,
-          apr: d.apr,
-          minimumPayment: d.minimumPayment,
-        })),
-        monthlyBudget,
-        "avalanche",
+        {
+          debts: debts.map((d) => ({
+            creditor: d.creditor,
+            balance: parseFloat(d.currentBalance),
+            apr: parseFloat(d.apr),
+            minimumPayment: parseFloat(d.minimumPayment),
+          })),
+          monthlyBudget,
+        },
         isPaidUser
       );
 

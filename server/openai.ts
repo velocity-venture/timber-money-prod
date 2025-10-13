@@ -1,37 +1,50 @@
-/**
- * Copyright (c) 2025 Shoebox to Autopilot. All Rights Reserved.
- * PROPRIETARY AND CONFIDENTIAL
- * 
- * This file contains trade secrets and proprietary business logic.
- * Unauthorized copying, reverse engineering, or distribution is strictly prohibited.
- * 
- * Implementation based on blueprint: javascript_openai
- * Hybrid model: GPT-4o for paid users, GPT-4o-mini for free users
- */
-
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const TIMBER_SYSTEM_PROMPT =
+  "You are Timber, the AI behind Timber Money (timbermoney.ai) - Autopilot Money Ops. Mission: From chaos to calm. Set it once; let it work. Principles: calm, clear, shame-free; grade-8 reading level; transparent about scope; privacy first; security: AES-256 at rest, TLS in transit. Household model: Members (Owner, Partner, Teen), Accounts, Receipts, Bills, Budgets, Rules, Exports, Alerts. North Star: MAAH = ≥1 connected account + ≥1 recurring bill detected + ≥1 new receipt processed. Philosophy: Kind, clear, no shame. Celebrate every upload. Break complex finance into micro-steps. Tone: warm, confident. Boundaries: No tax/legal advice; no guarantees; refer pros for complex cases. Structure: 1) Acknowledge question, 2) Context check, 3) Answer (simple → advanced), 4) Action steps, 5) Disclaimers. You help users master their money ops from a shoebox of chaos to a calm, autopilot system.";
 
-// Hybrid model selection based on user subscription status
-function getModelForUser(isPaidUser: boolean): string {
-  return isPaidUser ? "gpt-4o" : "gpt-4o-mini";
+const TIMBER_ADVICE_PLAYBOOK =
+  "ADVICE MODE ADDENDUM — APPROACH & CREDIT SCORE PLAYBOOK\n" +
+  "Your approach is:\n" +
+  "1. UNWAVERINGLY ENCOURAGING: Celebrate EVERY step users take. Even uploading one document is brave! No matter how bad their situation looks, you've seen worse turn into success stories.\n" +
+  "2. ALWAYS HOPEFUL: NEVER leave someone feeling hopeless. If debt seems insurmountable, break it into micro-wins. If income is too low, suggest creative solutions. There's ALWAYS a path forward.\n" +
+  "3. EXPERT-LEVEL: Provide sophisticated strategies that normally only wealthy clients receive, but explain them clearly and adapt them to ANY income level.\n" +
+  "4. AUTOMATED: Design solutions that require minimal ongoing input - set it and forget it approaches that run on autopilot.\n" +
+  "5. COMPREHENSIVE: Consider taxes, investments, debt, budgeting, credit scores, and estate planning holistically - but prioritize based on their current crisis level.\n" +
+  "6. REALISTIC YET OPTIMISTIC: If traditional debt payoff would take 40 years, explore debt settlement, bankruptcy as a fresh start, or income-boosting strategies. Frame these as strategic tools, not failures.\n" +
+  "\nCREDIT SCORE EXPERTISE:\n" +
+  "- People who went from 450 to 750+ in 18 months\n" +
+  "- Bankruptcy filers who achieved 700+ scores within 2 years\n" +
+  "- Medical debt victims who removed $100K+ in collections\n" +
+  "- Identity theft survivors who restored perfect credit\n" +
+  "\nYOUR CREDIT SCORE IMPROVEMENT STRATEGIES:\n" +
+  "IMMEDIATE (0-30 days): Pay down cards <30% (ideally <10%); AU on aged accounts; request limit increases; pay before statement close.\n" +
+  "DISPUTES: Challenge inaccuracies; goodwill letters; pay-for-delete; check statute of limitations.\n" +
+  "MIX: Secured cards; credit builder loans; AU strategies; keep oldest cards open.\n" +
+  "TIMING: Rate shopping windows; apply when scores peak; time disputes 60 days before big purchases; know drop-off dates.\n" +
+  "ADVANCED: Rapid rescore; spouse/family piggyback; business credit; avoid bad repair shops.\n" +
+  "CRITICAL RULES: Never pay collections without pay-for-delete; payment history 35%, utilization 30%, length 15%, new 10%, mix 10%; closing cards hurts; expect temporary dips.\n" +
+  "\nGuidance: Provide specific point-change estimates, month-by-month plans, and factor links. Celebrate small wins.";
+
+const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+const openai = hasOpenAIKey ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+
+function requireOpenAI() {
+  if (!openai) {
+    throw new Error("OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable to use AI features.");
+  }
+  return openai;
 }
 
-export async function analyzeFinancialDocument(
-  base64Image: string,
-  documentType: string,
-  isPaidUser: boolean = false
-): Promise<{
-  summary: string;
+export interface FinancialDocumentAnalysis {
+  documentType: string;
   extractedData: {
     debts?: Array<{
       creditor: string;
       balance: number;
       apr?: number;
       minimumPayment?: number;
+      accountNumber?: string;
     }>;
     assets?: Array<{
       name: string;
@@ -40,206 +53,144 @@ export async function analyzeFinancialDocument(
       details?: string;
     }>;
     income?: {
-      monthlyAmount: number;
+      monthlyAmount?: number;
+      frequency?: string;
       source?: string;
     };
+    creditScore?: number;
+    creditUtilization?: number;
+    paymentHistory?: string;
   };
-}> {
-  const model = getModelForUser(isPaidUser);
+  summary: string;
+  recommendations?: string[];
+}
 
-  const systemPrompt = `You are a financial document analysis assistant. Analyze the provided financial document and extract relevant information.
+export async function analyzeFinancialDocument(
+  base64Image: string,
+  documentType: string,
+  isPaidUser: boolean = false
+): Promise<FinancialDocumentAnalysis> {
+  const client = requireOpenAI();
+  const model = isPaidUser ? "gpt-4o" : "gpt-4o-mini";
 
-For ${documentType} documents, extract:
-- Account holder information
-- Balance information
-- Payment details
-- Interest rates (if applicable)
-- Due dates (if applicable)
+  const systemPrompt = TIMBER_SYSTEM_PROMPT;
 
-Return a JSON response with:
-- summary: A brief summary of the document
-- extractedData: Structured data extracted from the document (debts, assets, or income)
-
-Be precise and extract only information that is clearly visible in the document.`;
-
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: "system",
-        content: systemPrompt,
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `Analyze this ${documentType} document and extract financial information.`,
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:image/jpeg;base64,${base64Image}`,
+  try {
+    const response = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text:
+                `Analyze this ${documentType} document and extract all financial data. ` +
+                `Respond with JSON in this format: { "documentType": string, "extractedData": {...}, "summary": string, "recommendations": string[] }. ` +
+                `For document type "${documentType}", extract: ` +
+                `- Bank statements: balances, transactions, income deposits; ` +
+                `- Credit cards: balance, APR, minimum payment, credit limit, transactions; ` +
+                `- Loans: balance, interest rate, monthly payment, original amount; ` +
+                `- Credit reports: score, payment history, utilization, accounts; ` +
+                `- Investments: account value, holdings, performance; ` +
+                `- Pay stubs: gross, net, frequency, deductions. ` +
+                `Amounts as numbers (no $). APR as percent (e.g., 18.99).`
             },
-          },
-        ],
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
+            {
+              type: "image_url",
+              image_url: { url: `data:image/jpeg;base64,${base64Image}` }
+            }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 4096
+    });
 
-  const result = JSON.parse(response.choices[0].message.content || "{}");
-  return {
-    summary: result.summary || "Document analyzed successfully",
-    extractedData: result.extractedData || {},
-  };
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    return result as FinancialDocumentAnalysis;
+  } catch (error: any) {
+    throw new Error("Failed to analyze document: " + error.message);
+  }
 }
 
 export async function generateFinancialAdvice(
-  userQuestion: string,
-  financialContext: {
-    debts?: Array<{
-      creditor: string;
-      debtType: string;
-      currentBalance: string;
-      apr: string;
-    }>;
-    assets?: Array<{
-      name: string;
-      assetType: string;
-      currentValue: string;
-    }>;
+  question: string,
+  userContext: {
+    debts?: any[];
+    assets?: any[];
     income?: number;
     creditScore?: number;
   },
   isPaidUser: boolean = false
 ): Promise<string> {
-  const model = getModelForUser(isPaidUser);
+  const client = requireOpenAI();
+  const model = isPaidUser ? "gpt-4o" : "gpt-4o-mini";
+  const contextStr = JSON.stringify(userContext, null, 2);
 
-  const systemPrompt = `You are an expert financial advisor specializing in debt management, budgeting, and personal finance optimization. Your role is to:
+  try {
+    const response = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: `${TIMBER_SYSTEM_PROMPT}\n\n${TIMBER_ADVICE_PLAYBOOK}` },
+        {
+          role: "user",
+          content: `User's financial context:\n${contextStr}\n\nUser's question: ${question}`
+        }
+      ],
+      max_completion_tokens: 2048
+    });
 
-1. Provide clear, actionable financial advice
-2. Explain complex financial concepts in simple terms
-3. Consider the user's complete financial picture
-4. Prioritize debt reduction and financial stability
-5. Always include legal disclaimers when appropriate
-
-Important: Always remind users that this is educational information only and they should consult a certified financial advisor for personalized advice.`;
-
-  const contextInfo = [];
-  
-  if (financialContext.debts && financialContext.debts.length > 0) {
-    const totalDebt = financialContext.debts.reduce(
-      (sum, debt) => sum + parseFloat(debt.currentBalance),
-      0
-    );
-    contextInfo.push(`Total debt: $${totalDebt.toLocaleString()}`);
-    contextInfo.push(`Number of debts: ${financialContext.debts.length}`);
+    return response.choices[0].message.content || "Unable to generate advice.";
+  } catch (error: any) {
+    throw new Error("Failed to generate advice: " + error.message);
   }
-
-  if (financialContext.assets && financialContext.assets.length > 0) {
-    const totalAssets = financialContext.assets.reduce(
-      (sum, asset) => sum + parseFloat(asset.currentValue),
-      0
-    );
-    contextInfo.push(`Total assets: $${totalAssets.toLocaleString()}`);
-  }
-
-  if (financialContext.income) {
-    contextInfo.push(`Monthly income: $${financialContext.income.toLocaleString()}`);
-  }
-
-  if (financialContext.creditScore) {
-    contextInfo.push(`Credit score: ${financialContext.creditScore}`);
-  }
-
-  const userMessage = contextInfo.length > 0
-    ? `User's financial context:\n${contextInfo.join('\n')}\n\nUser's question: ${userQuestion}`
-    : `User's question: ${userQuestion}`;
-
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: "system",
-        content: systemPrompt,
-      },
-      {
-        role: "user",
-        content: userMessage,
-      },
-    ],
-  });
-
-  return response.choices[0].message.content || "I apologize, but I couldn't generate a response. Please try again.";
 }
 
 export async function createDebtPayoffPlan(
-  debts: Array<{
-    id: number;
-    creditor: string;
-    currentBalance: string;
-    apr: string;
-    minimumPayment: string;
-  }>,
-  monthlyPayment: number,
-  strategy: "avalanche" | "snowball",
+  data: {
+    debts: Array<{
+      creditor: string;
+      balance: number;
+      apr: number;
+      minimumPayment: number;
+    }>;
+    monthlyBudget: number;
+  },
   isPaidUser: boolean = false
 ): Promise<{
-  plan: Array<{
-    debtId: number;
-    creditor: string;
-    paymentOrder: number;
-    estimatedPayoffMonths: number;
-    totalInterest: number;
-  }>;
-  summary: {
-    totalPayoffMonths: number;
-    totalInterestPaid: number;
-    monthlySavings?: number;
-  };
+  strategies: any[];
+  timeline: any[];
+  recommendations: string[];
 }> {
-  const model = getModelForUser(isPaidUser);
+  const client = requireOpenAI();
+  const model = isPaidUser ? "gpt-4o" : "gpt-4o-mini";
 
-  const systemPrompt = `You are a debt payoff planning expert. Calculate an optimal debt payoff plan using the ${strategy} method.
+  try {
+    const response = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: TIMBER_SYSTEM_PROMPT },
+        {
+          role: "user",
+          content:
+            `Create a debt payoff plan for:\n` +
+            `Debts: ${JSON.stringify(data.debts)}\n` +
+            `Monthly Budget: ${data.monthlyBudget}\n\n` +
+            `Provide a JSON object with:\n` +
+            `{"strategies": [{"name": string, "method": string, "debtFreeMonths": number, "totalInterest": number, "monthlyPayment": number, "description": string, "emotionalBenefit": string }],\n` +
+            `"timeline": [{"month": number, "remainingBalance": number, "totalPaid": number, "milestone": string }],\n` +
+            `"recommendations": string[] }`
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 4096
+    });
 
-${strategy === "avalanche" 
-  ? "Avalanche method: Pay off debts from highest to lowest APR (interest rate)"
-  : "Snowball method: Pay off debts from lowest to highest balance"
-}
-
-Return a JSON response with:
-- plan: Array of debts with payment order and payoff estimates
-- summary: Overall summary including total payoff time and interest paid`;
-
-  const debtsInfo = debts.map((debt, index) => ({
-    id: debt.id,
-    creditor: debt.creditor,
-    balance: parseFloat(debt.currentBalance),
-    apr: parseFloat(debt.apr),
-    minimumPayment: parseFloat(debt.minimumPayment),
-  }));
-
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      {
-        role: "system",
-        content: systemPrompt,
-      },
-      {
-        role: "user",
-        content: `Create a ${strategy} debt payoff plan for these debts:
-${JSON.stringify(debtsInfo, null, 2)}
-
-Monthly payment budget: $${monthlyPayment}
-
-Calculate the payment order, estimated payoff months for each debt, and total interest that will be paid.`,
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
-
-  const result = JSON.parse(response.choices[0].message.content || "{}");
-  return result;
+    const result = JSON.parse(response.choices[0].message.content || "{}");
+    return result;
+  } catch (error: any) {
+    throw new Error("Failed to create payoff plan: " + error.message);
+  }
 }
