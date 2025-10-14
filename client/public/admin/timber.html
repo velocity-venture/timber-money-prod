@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Timber Analytics</title>
+  <style>
+    :root{ --bg:#0b1220; --card:#0f172a; --ink:#e5e7eb; --muted:#94a3b8; --emerald:#10b981; --red:#ef4444;}
+    body{margin:0;font:14px/1.45 system-ui,Segoe UI,Inter,Arial,sans-serif;background:var(--bg);color:var(--ink);}
+    header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #0f213a;background:rgba(15,23,42,.6);backdrop-filter:saturate(120%) blur(6px);}
+    header img{width:28px;height:28px}
+    main{max-width:1100px;margin:18px auto;padding:0 16px;}
+    .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+    .card{background:var(--card);border:1px solid #0f213a;border-radius:12px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,.22)}
+    .kpi{display:flex;flex-direction:column;gap:4px}
+    .kpi .n{font-size:28px;font-weight:800;color:#f8fafc}
+    .kpi .l{color:var(--muted);font-weight:600}
+    .controls{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+    input[type="date"]{background:#0b1629;border:1px solid #23324a;color:#dbe2ea;padding:6px 8px;border-radius:8px}
+    button{background:#0b1629;border:1px solid #1f2f49;color:#dbe2ea;padding:6px 10px;border-radius:8px;cursor:pointer}
+    button:hover{border-color:#2a3e61}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;border-bottom:1px solid #0f213a;text-align:left}
+    th{color:var(--muted);font-weight:700}
+    .tag{display:inline-block;background:#072a21;border:1px solid rgba(16,185,129,.4);color:#baf7de;padding:2px 6px;border-radius:999px;font-weight:700}
+    .muted{color:var(--muted)}
+    .ok{color:var(--emerald)} .warn{color:#f59e0b} .bad{color:var(--red)}
+    .footer{margin-top:18px;color:var(--muted)}
+    .hint{font-size:12px;color:var(--muted)}
+    .flex{display:flex;gap:12px;align-items:center}
+    .chart{height:120px;position:relative;background:#0b1629;border:1px solid #1b2a44;border-radius:10px;margin-top:8px;overflow:hidden}
+    .bar{position:absolute;bottom:0;width:18px;background:linear-gradient(180deg, rgba(16,185,129,.8), rgba(16,185,129,.2));border:1px solid rgba(16,185,129,.5);border-radius:6px 6px 0 0}
+    .bar.h{background:linear-gradient(180deg, rgba(59,130,246,.8), rgba(59,130,246,.2));border-color:rgba(59,130,246,.5)}
+    .bar.c{background:linear-gradient(180deg, rgba(244,63,94,.8), rgba(244,63,94,.2));border-color:rgba(244,63,94,.5)}
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/mascot/timber-animated.svg" alt="Timber" />
+    <div>
+      <div style="font-weight:800">Timber Analytics</div>
+      <div class="hint">Stewardship shows up in the numbers.</div>
+    </div>
+  </header>
+  <main>
+    <div class="controls">
+      <label for="day" class="muted">Day</label>
+      <input id="day" type="date"/>
+      <button id="refresh">Refresh</button>
+      <span id="status" class="hint"></span>
+    </div>
+
+    <div class="row">
+      <div class="card kpi">
+        <div class="l">Impressions</div>
+        <div class="n" id="kpi-impr">0</div>
+        <div class="chart" id="chart-impr"></div>
+      </div>
+      <div class="card kpi">
+        <div class="l">Hovers</div>
+        <div class="n" id="kpi-hov">0</div>
+        <div class="chart" id="chart-hov"></div>
+      </div>
+      <div class="card kpi">
+        <div class="l">Clicks</div>
+        <div class="n" id="kpi-click">0</div>
+        <div class="chart" id="chart-click"></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="card">
+        <div class="flex"><span class="tag">Top Pages</span><span class="hint">today</span></div>
+        <table id="tbl-path"><thead><tr><th>Path</th><th>Event</th><th>Count</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <div class="flex"><span class="tag">Top Tips</span><span class="hint">by tipHash</span></div>
+        <table id="tbl-tip"><thead><tr><th>Tip Hash</th><th>Event</th><th>Count</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="card">
+        <div class="flex"><span class="tag">Notes</span></div>
+        <div class="hint">
+          - tipHash ties to copy variants without storing text.<br/>
+          - Aim for click-through rate > 3% on key pages.<br/>
+          - If a tip underperforms, iterate the copy. Great things come from doing the hard things!
+        </div>
+      </div>
+    </div>
+
+    <div class="footer hint">© Timber Money</div>
+  </main>
+
+  <script>
+    const $ = (s)=>document.querySelector(s);
+    const fmt = (n)=>Number(n||0).toLocaleString();
+
+    function bars(el, n){
+      const max = Math.max(1, ...n.map(x=>x||0));
+      el.innerHTML = '';
+      n.forEach((v,i)=>{
+        const d = document.createElement('div');
+        d.className = 'bar' + (el.id.includes('hov') ? ' h' : el.id.includes('click') ? ' c' : '');
+        const w = 18, gap = 8, x = i*(w+gap)+8;
+        const h = Math.round((v/max)*100)+10;
+        d.style.left = x+'px';
+        d.style.height = h+'px';
+        d.style.width = w+'px';
+        el.appendChild(d);
+      });
+    }
+
+    async function load(){
+      const input = $('#day');
+      if(!input.value){
+        const t = new Date();
+        input.value = new Date(t.getTime()-t.getTimezoneOffset()*60000).toISOString().slice(0,10);
+      }
+      const day = input.value;
+      $('#status').textContent = 'Loading...';
+      try{
+        const r = await fetch('/api/timber/stats?day=' + encodeURIComponent(day));
+        const j = await r.json();
+        $('#kpi-impr').textContent = fmt(j.totals.impressions);
+        $('#kpi-hov').textContent = fmt(j.totals.hovers);
+        $('#kpi-click').textContent = fmt(j.totals.clicks);
+
+        // Simple spark bars (uses last 5 rows of byPath/byTip events count per group)
+        bars($('#chart-impr'), [j.totals.impressions, 0, 0, 0, 0]);
+        bars($('#chart-hov'),  [j.totals.hovers, 0, 0, 0, 0]);
+        bars($('#chart-click'),[j.totals.clicks, 0, 0, 0, 0]);
+
+        const pathT = $('#tbl-path tbody'); pathT.innerHTML='';
+        (j.byPath||[]).slice(0,20).forEach(r=>{
+          const tr=document.createElement('tr');
+          tr.innerHTML = '<td><span class="muted">'+(r.path||'/')+'</span></td><td>'+r.event+'</td><td>'+fmt(r.c)+'</td>';
+          pathT.appendChild(tr);
+        });
+
+        const tipT = $('#tbl-tip tbody'); tipT.innerHTML='';
+        (j.byTip||[]).slice(0,20).forEach(r=>{
+          const tr=document.createElement('tr');
+          tr.innerHTML = '<td>'+ (r.tipHash ?? '—') +'</td><td>'+r.event+'</td><td>'+fmt(r.c)+'</td>';
+          tipT.appendChild(tr);
+        });
+
+        $('#status').textContent = 'Loaded ' + day;
+      }catch(e){
+        $('#status').textContent = 'Failed to load';
+        console.error(e);
+      }
+    }
+    $('#refresh').addEventListener('click', load);
+    load();
+  </script>
+</body>
+</html>

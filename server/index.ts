@@ -5,6 +5,7 @@ import { registerStripeRoutes } from "./stripe-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { trackRequest, checkSuspiciousPatterns } from "./security-monitor";
 import { timberAnalyticsRouter } from "./timber-analytics";
+import { timberAdminRouter } from "./timber-admin";
 
 const app = express();
 
@@ -106,6 +107,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   
   // Timber analytics
   app.use("/api/timber", timberAnalyticsRouter);
+  
+  // Timber admin dashboard (protected)
+  app.use("/admin", timberAdminRouter);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
