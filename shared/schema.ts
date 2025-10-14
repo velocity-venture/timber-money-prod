@@ -167,3 +167,32 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
 
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+
+// Pitch Deck Access Tokens table (for secure sharing)
+export const pitchAccessTokens = pgTable("pitch_access_tokens", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  token: varchar("token").notNull().unique(), // The actual access token
+  createdBy: varchar("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  recipientEmail: varchar("recipient_email"), // Optional: who this was sent to
+  recipientName: varchar("recipient_name"), // Optional: name for tracking
+  expiresAt: timestamp("expires_at"), // Optional expiration
+  maxUses: integer("max_uses"), // Optional usage limit
+  usageCount: integer("usage_count").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastUsedAt: timestamp("last_used_at"),
+});
+
+export const insertPitchAccessTokenSchema = createInsertSchema(pitchAccessTokens).omit({
+  id: true,
+  usageCount: true,
+  createdAt: true,
+  lastUsedAt: true,
+});
+
+export type InsertPitchAccessToken = z.infer<typeof insertPitchAccessTokenSchema>;
+export type PitchAccessToken = typeof pitchAccessTokens.$inferSelect;

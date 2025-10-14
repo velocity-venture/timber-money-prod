@@ -6,6 +6,7 @@ import {
   assets,
   financialProfiles,
   chatMessages,
+  pitchAccessTokens,
   type User,
   type UpsertUser,
   type Document,
@@ -18,9 +19,11 @@ import {
   type InsertFinancialProfile,
   type ChatMessage,
   type InsertChatMessage,
+  type PitchAccessToken,
+  type InsertPitchAccessToken,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (Required for Replit Auth)
@@ -71,6 +74,13 @@ export interface IStorage {
   // Chat operations
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatHistory(userId: string, limit?: number): Promise<ChatMessage[]>;
+  
+  // Pitch deck access token operations
+  createPitchAccessToken(token: InsertPitchAccessToken): Promise<PitchAccessToken>;
+  getPitchAccessToken(token: string): Promise<PitchAccessToken | undefined>;
+  getAllPitchAccessTokens(createdBy: string): Promise<PitchAccessToken[]>;
+  incrementTokenUsage(token: string): Promise<PitchAccessToken>;
+  deactivateToken(id: string): Promise<void>;
   
   // Data deletion
   deleteAllUserData(userId: string): Promise<void>;
@@ -261,6 +271,47 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
   
+  // Pitch deck access token operations
+  async createPitchAccessToken(tokenData: InsertPitchAccessToken): Promise<PitchAccessToken> {
+    const [token] = await db.insert(pitchAccessTokens).values(tokenData).returning();
+    return token;
+  }
+
+  async getPitchAccessToken(token: string): Promise<PitchAccessToken | undefined> {
+    const [accessToken] = await db
+      .select()
+      .from(pitchAccessTokens)
+      .where(eq(pitchAccessTokens.token, token));
+    return accessToken;
+  }
+
+  async getAllPitchAccessTokens(createdBy: string): Promise<PitchAccessToken[]> {
+    return await db
+      .select()
+      .from(pitchAccessTokens)
+      .where(eq(pitchAccessTokens.createdBy, createdBy))
+      .orderBy(desc(pitchAccessTokens.createdAt));
+  }
+
+  async incrementTokenUsage(token: string): Promise<PitchAccessToken> {
+    const [updated] = await db
+      .update(pitchAccessTokens)
+      .set({
+        usageCount: sql`${pitchAccessTokens.usageCount} + 1`,
+        lastUsedAt: new Date(),
+      })
+      .where(eq(pitchAccessTokens.token, token))
+      .returning();
+    return updated;
+  }
+
+  async deactivateToken(id: string): Promise<void> {
+    await db
+      .update(pitchAccessTokens)
+      .set({ isActive: false })
+      .where(eq(pitchAccessTokens.id, id));
+  }
+
   // Delete all user data
   async deleteAllUserData(userId: string): Promise<void> {
     // Delete in order of dependencies (reverse of foreign keys)
@@ -269,6 +320,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(debts).where(eq(debts.userId, userId));
     await db.delete(assets).where(eq(assets.userId, userId));
     await db.delete(financialProfiles).where(eq(financialProfiles.userId, userId));
+    await db.delete(pitchAccessTokens).where(eq(pitchAccessTokens.createdBy, userId));
     // Note: We keep the user account itself for auth purposes
     // If you want to fully delete, uncomment the next line:
     // await db.delete(users).where(eq(users.id, userId));
