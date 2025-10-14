@@ -6,7 +6,6 @@ import Tesseract from "tesseract.js";
 import { db } from "./db";
 import { documents } from "../shared/schema";
 import { eq, and } from "drizzle-orm";
-import { docsQueue } from "./docs-queue";
 
 export const docsRouter = Router();
 
@@ -114,7 +113,10 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
     const parsed = text ? normalizeExtractedData(text, name) : null;
     const needsReview = extractionError || !parsed?.summary.total;
     const documentType = parsed?.type || "other";
-    const status = extractionError ? "failed" : (text ? "completed" : "pending");
+    
+    // Simple binary status: extraction succeeded only if no errors AND we have text and parsed data
+    // Any extraction error → failed, regardless of residual text
+    const status = (!extractionError && text && parsed) ? "completed" : "failed";
 
     const [doc] = await db
       .insert(documents)
@@ -133,11 +135,7 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
       })
       .returning();
 
-    // Only enqueue documents that need further processing (status = "pending")
-    // Don't enqueue "completed" (already extracted) or "failed" (extraction error)
-    if (status === "pending") {
-      docsQueue.enqueue(doc.id);
-    }
+    // Queue removed - all processing is synchronous
 
     res.json({
       id: doc.id,

@@ -85,19 +85,28 @@ Timber Money is an AI-powered financial management platform featuring the "Timbe
 - Document upload error handling: try-finally blocks ensure UI always recovers from upload failures.
 
 ### Document Processing Architecture
-1. **Shoebox Mode** (Default): Users dump all documents at once
+1. **Dual Upload Systems**:
+   - **AI Vision Upload** (POST /api/documents/upload): GPT-4 vision analysis for intelligent extraction
+     - Status flow: processing → completed/failed
+     - Synchronous processing with error handling
+     - Auto-creates financial entities (debts, assets, income) from AI analysis
+   - **PDF/OCR Upload** (POST /api/docs/upload): Direct text extraction with fallback OCR
+     - PDF extraction using pdf-parse library
+     - Image OCR using Tesseract.js
+     - Status flow: completed/failed (synchronous, no pending state)
+     - Includes needsReview flag for manual verification
+2. **Shoebox Mode** (Default): Users dump all documents at once
    - Auto-detects document type from filename patterns
    - AI categorizes and extracts data automatically
    - Mobile-optimized with camera capture and photo library
-2. **Organized Mode**: Users select document type first, then upload
+3. **Organized Mode**: Users select document type first, then upload
    - Targeted upload for specific document categories
    - More control over categorization
-3. **Processing Pipeline**:
-   - Files staged locally with pending status
-   - User triggers batch processing via "Analyze & Create Autopilot Plan" button
-   - Sequential processing with status updates: pending → uploading → analyzing → completed/error
+4. **Error Handling**:
+   - AI analysis failures properly set document status to "failed"
+   - UI recovery guaranteed with try-finally blocks
    - Per-file error handling prevents cascade failures
-   - Auto-creates debts, assets, and income from extracted data
+   - Status filtering API: GET /api/docs?status={status}
 4. **Admin Dashboard** (/admin/timber):
    - Header-based authentication using ADMIN_VIEW_KEY secret
    - Real-time Timber analytics with daily stats API
