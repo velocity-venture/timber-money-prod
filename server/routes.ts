@@ -79,57 +79,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Analyze document with AI (using hybrid model)
         const base64Image = file.buffer.toString("base64");
-        const analysis = await analyzeFinancialDocument(
-          base64Image,
-          documentType,
-          isPaidUser
-        );
+        
+        try {
+          const analysis = await analyzeFinancialDocument(
+            base64Image,
+            documentType,
+            isPaidUser
+          );
 
-        // Update document with analysis
-        await storage.updateDocumentStatus(
-          document.id,
-          "completed",
-          analysis
-        );
+          // Update document with analysis
+          await storage.updateDocumentStatus(
+            document.id,
+            "completed",
+            analysis
+          );
 
-        // Auto-create debts from analysis
-        if (analysis.extractedData.debts) {
-          for (const debt of analysis.extractedData.debts) {
-            await storage.createDebt({
+          // Auto-create debts from analysis
+          if (analysis.extractedData.debts) {
+            for (const debt of analysis.extractedData.debts) {
+              await storage.createDebt({
+                userId,
+                creditor: debt.creditor,
+                debtType: documentType === "credit-cards" ? "credit-card" : "loan",
+                currentBalance: debt.balance.toString(),
+                originalBalance: debt.balance.toString(),
+                apr: (debt.apr || 0).toString(),
+                minimumPayment: (debt.minimumPayment || 0).toString(),
+                dueDate: null,
+              });
+            }
+          }
+
+          // Auto-create assets from analysis
+          if (analysis.extractedData.assets) {
+            for (const asset of analysis.extractedData.assets) {
+              await storage.createAsset({
+                userId,
+                name: asset.name,
+                assetType: asset.type as any,
+                currentValue: asset.value.toString(),
+                details: asset.details,
+              });
+            }
+          }
+
+          // Update financial profile
+          if (analysis.extractedData.income?.monthlyAmount) {
+            await storage.upsertFinancialProfile({
               userId,
-              creditor: debt.creditor,
-              debtType: documentType === "credit-cards" ? "credit-card" : "loan",
-              currentBalance: debt.balance.toString(),
-              originalBalance: debt.balance.toString(),
-              apr: (debt.apr || 0).toString(),
-              minimumPayment: (debt.minimumPayment || 0).toString(),
-              dueDate: null,
+              monthlyIncome: analysis.extractedData.income.monthlyAmount.toString(),
             });
           }
-        }
 
-        // Auto-create assets from analysis
-        if (analysis.extractedData.assets) {
-          for (const asset of analysis.extractedData.assets) {
-            await storage.createAsset({
-              userId,
-              name: asset.name,
-              assetType: asset.type as any,
-              currentValue: asset.value.toString(),
-              details: asset.details,
-            });
-          }
+          res.json({ document, analysis });
+        } catch (analysisError: any) {
+          // Mark document as failed if AI analysis fails
+          await storage.updateDocumentStatus(
+            document.id,
+            "failed",
+            null
+          );
+          console.error("Error analyzing document:", analysisError);
+          res
+            .status(500)
+            .json({ message: "Failed to analyze document: " + analysisError.message });
         }
-
-        // Update financial profile
-        if (analysis.extractedData.income?.monthlyAmount) {
-          await storage.upsertFinancialProfile({
-            userId,
-            monthlyIncome: analysis.extractedData.income.monthlyAmount.toString(),
-          });
-        }
-
-        res.json({ document, analysis });
       } catch (error: any) {
         console.error("Error processing document:", error);
         res

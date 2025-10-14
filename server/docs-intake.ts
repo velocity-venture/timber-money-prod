@@ -5,7 +5,7 @@ import fs from "fs";
 import Tesseract from "tesseract.js";
 import { db } from "./db";
 import { documents } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { docsQueue } from "./docs-queue";
 
 export const docsRouter = Router();
@@ -133,8 +133,11 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
       })
       .returning();
 
-    // Enqueue for asynchronous processing
-    docsQueue.enqueue(doc.id);
+    // Only enqueue documents that need further processing (status = "pending")
+    // Don't enqueue "completed" (already extracted) or "failed" (extraction error)
+    if (status === "pending") {
+      docsQueue.enqueue(doc.id);
+    }
 
     res.json({
       id: doc.id,
@@ -196,7 +199,6 @@ docsRouter.get("/", async (req: any, res: Response) => {
 
     // Apply status filter if provided
     if (statusFilter) {
-      const { and } = await import("drizzle-orm");
       query = db
         .select()
         .from(documents)

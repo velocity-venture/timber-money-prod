@@ -58,12 +58,21 @@ export const docsQueue = new DocumentQueue();
 // Database status update listeners
 docsQueue.on("start", async (job) => {
   try {
-    await db.update(documents)
-      .set({ 
-        status: "processing",
-        processedAt: new Date()
-      })
-      .where(eq(documents.id, job.docId));
+    // Only update to processing if currently pending
+    // Don't overwrite failed or completed status
+    const [doc] = await db.select()
+      .from(documents)
+      .where(eq(documents.id, job.docId))
+      .limit(1);
+    
+    if (doc && doc.status === "pending") {
+      await db.update(documents)
+        .set({ 
+          status: "processing",
+          processedAt: new Date()
+        })
+        .where(eq(documents.id, job.docId));
+    }
   } catch (error) {
     console.error(`Failed to update document ${job.docId} to processing:`, error);
   }
@@ -71,13 +80,21 @@ docsQueue.on("start", async (job) => {
 
 docsQueue.on("done", async (job) => {
   try {
-    // Mark as completed - extraction already done in upload step
-    await db.update(documents)
-      .set({ 
-        status: "completed",
-        processedAt: new Date()
-      })
-      .where(eq(documents.id, job.docId));
+    // Only mark as completed if currently processing
+    // Don't overwrite failed status
+    const [doc] = await db.select()
+      .from(documents)
+      .where(eq(documents.id, job.docId))
+      .limit(1);
+    
+    if (doc && doc.status === "processing") {
+      await db.update(documents)
+        .set({ 
+          status: "completed",
+          processedAt: new Date()
+        })
+        .where(eq(documents.id, job.docId));
+    }
   } catch (error) {
     console.error(`Failed to update document ${job.docId} to completed:`, error);
   }
