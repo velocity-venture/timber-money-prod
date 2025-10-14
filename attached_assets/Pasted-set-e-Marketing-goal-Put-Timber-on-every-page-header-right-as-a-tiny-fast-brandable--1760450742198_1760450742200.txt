@@ -1,0 +1,183 @@
+set -e
+
+# Marketing goal:
+# - Put Timber on every page (header-right) as a tiny, fast, brandable animated SVG
+# - Idle animation: subtle clipboard bounce + eye blink every 4–7s (randomized)
+# - Dark-mode aware, accessible, zero external deps
+
+# 1) Create public assets folder if needed
+mkdir -p client/public/mascot
+
+# 2) Add Timber animated SVG (optimized + accessible)
+cat > client/public/mascot/timber-animated.svg <<'SVG'
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title>Timber, the Safety Beaver Mascot</title>
+  <desc>Animated mascot holding a checklist clipboard, wearing a yellow hard hat labeled S2A and a hi-vis vest.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background plate (optional, subtle) -->
+  <rect x="0" y="0" width="140" height="140" rx="16" fill="url(#bg)" opacity="0.0" />
+
+  <!-- Group Timber so we can move/scale together -->
+  <g id="timber" transform="translate(10,6)" filter="url(#shadow)">
+    <!-- Tail -->
+    <ellipse cx="32" cy="98" rx="16" ry="12" fill="#6B4E3D" stroke="#3F2E26" stroke-width="2" />
+    <path d="M18 98 Q32 86 48 98" stroke="#3F2E26" stroke-width="2" opacity="0.3" />
+
+    <!-- Body -->
+    <ellipse cx="52" cy="70" rx="34" ry="36" fill="#8B5E43" stroke="#3F2E26" stroke-width="2" />
+
+    <!-- Vest -->
+    <path d="M30 60 L74 60 L78 86 L26 86 Z" fill="#FACC15" stroke="#3F2E26" stroke-width="2"/>
+    <path d="M52 60 L52 86" stroke="#3F2E26" stroke-width="2"/>
+    <path d="M30 60 Q52 68 74 60" fill="none" stroke="#3F2E26" stroke-width="2" opacity="0.5"/>
+
+    <!-- Collar -->
+    <path d="M32 58 Q52 64 72 58 L72 56 Q52 62 32 56 Z" fill="#334155" stroke="#1F2937" stroke-width="2"/>
+
+    <!-- Head -->
+    <ellipse cx="56" cy="44" rx="28" ry="24" fill="#8B5E43" stroke="#3F2E26" stroke-width="2"/>
+
+    <!-- Hat -->
+    <g id="hat">
+      <path d="M32 36 Q56 22 80 36 L80 44 Q56 50 32 44 Z" fill="#FDE047" stroke="#3F2E26" stroke-width="2"/>
+      <path d="M36 40 Q56 34 76 40" stroke="#3F2E26" stroke-width="2" opacity="0.5"/>
+      <text x="56" y="41" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="8" font-weight="700" fill="#0F172A">S2A</text>
+    </g>
+
+    <!-- Eyes -->
+    <g id="eyes">
+      <ellipse id="eyeL" cx="48" cy="44" rx="3.7" ry="4.2" fill="#fff" stroke="#1F2937" stroke-width="1.6"/>
+      <ellipse id="eyeR" cx="64" cy="44" rx="3.7" ry="4.2" fill="#fff" stroke="#1F2937" stroke-width="1.6"/>
+      <circle id="pupilL" cx="49" cy="45" r="1.6" fill="#0F172A"/>
+      <circle id="pupilR" cx="63" cy="45" r="1.6" fill="#0F172A"/>
+      <!-- lids for blink -->
+      <rect id="lidL" x="44" y="39" width="8" height="10" fill="#8B5E43" rx="3" ry="3" opacity="0"/>
+      <rect id="lidR" x="60" y="39" width="8" height="10" fill="#8B5E43" rx="3" ry="3" opacity="0"/>
+    </g>
+
+    <!-- Nose + teeth -->
+    <ellipse cx="56" cy="52" rx="6.5" ry="5" fill="#111827" />
+    <rect x="52" y="56" width="4" height="6" fill="#fff" rx="1" />
+    <rect x="56" y="56" width="4" height="6" fill="#fff" rx="1" />
+
+    <!-- Mouth -->
+    <path d="M48 56 Q56 60 64 56" stroke="#3F2E26" stroke-width="2" fill="none"/>
+
+    <!-- Clipboard hand/arm -->
+    <g id="arm" transform="translate(78,70)">
+      <rect x="-10" y="-6" width="9" height="20" fill="#8B5E43" stroke="#3F2E26" stroke-width="2" rx="3"/>
+      <g id="clipboard" transform="translate(0,0)">
+        <rect x="0" y="-14" width="26" height="34" rx="4" fill="#E5E7EB" stroke="#111827" stroke-width="2"/>
+        <rect x="6" y="-18" width="14" height="6" rx="2" fill="#1F2937"/>
+        <path d="M8 -6 h12 M8 2 h12 M8 10 h12" stroke="#111827" stroke-width="2" />
+        <path d="M6 -6 l3 3 l5 -6" stroke="#16A34A" stroke-width="2" fill="none"/>
+        <path d="M6 2 l3 3 l5 -6" stroke="#16A34A" stroke-width="2" fill="none"/>
+        <path d="M6 10 l3 3 l5 -6" stroke="#16A34A" stroke-width="2" fill="none"/>
+      </g>
+    </g>
+
+    <!-- Feet -->
+    <ellipse cx="42" cy="106" rx="9" ry="4" fill="#8B5E43" stroke="#3F2E26" stroke-width="2"/>
+    <ellipse cx="66" cy="106" rx="9" ry="4" fill="#8B5E43" stroke="#3F2E26" stroke-width="2"/>
+  </g>
+
+  <!-- Animation: subtle bounce + random blink -->
+  <script><![CDATA[
+    (function(){
+      const root = document.currentScript.ownerDocument;
+      const timber = root.getElementById('timber');
+      const arm = root.getElementById('arm');
+      const lidL = root.getElementById('lidL');
+      const lidR = root.getElementById('lidR');
+      const clipboard = root.getElementById('clipboard');
+
+      // Idle micro-bounce
+      let t=0;
+      function frame(){
+        t+=0.02;
+        const y = Math.sin(t)*0.6;           // gentle bob
+        const a = 1 + Math.sin(t*0.5)*0.005; // imperceptible scale
+        timber.setAttribute('transform', `translate(10,${6+y}) scale(${a})`);
+        const armY = Math.sin(t*2)*0.8;      // tiny clipboard bob
+        arm.setAttribute('transform', `translate(78,${70+armY})`);
+        requestAnimationFrame(frame);
+      }
+      frame();
+
+      // Randomized eye blink every 4–7 seconds
+      function blink(){
+        lidL.setAttribute('opacity','1');
+        lidR.setAttribute('opacity','1');
+        setTimeout(()=>{
+          lidL.setAttribute('opacity','0');
+          lidR.setAttribute('opacity','0');
+          setTimeout(blink, 4000 + Math.random()*3000);
+        }, 120); // quick blink
+      }
+      setTimeout(blink, 2500);
+
+      // Hover delight: clipboard pop
+      const svg = root.querySelector('svg');
+      svg.addEventListener('mouseenter', ()=> clipboard.setAttribute('transform','translate(0,-1.5) scale(1.02)'));
+      svg.addEventListener('mouseleave', ()=> clipboard.setAttribute('transform','translate(0,0) scale(1)'));
+    })();
+  ]]></script>
+</svg>
+SVG
+
+# 3) Create a reusable header component that injects Timber top-right (Vite + vanilla)
+mkdir -p client/public/scripts
+cat > client/public/scripts/timber-header.js <<'JS'
+(function(){
+  const el = document.createElement('div');
+  el.id = 'timber-header';
+  el.style.cssText = `
+    position: fixed; top: 14px; right: 14px; z-index: 9999;
+    width: 72px; height: 72px; pointer-events: auto;
+  `;
+  el.innerHTML = '<img src="/mascot/timber-animated.svg" alt="Timber mascot" style="width:100%;height:100%;display:block;">';
+  document.addEventListener('DOMContentLoaded', function(){
+    document.body.appendChild(el);
+  });
+})();
+JS
+
+# 4) Auto-inject on every page without touching your framework:
+#    add a minimal HTML snippet to index.html (or create one if missing)
+if [ -f client/index.html ]; then
+  if ! grep -q 'timber-header.js' client/index.html; then
+    perl -0777 -pe 's#</head>#  <script src="/scripts/timber-header.js" defer></script>\n</head>#i' -i client/index.html
+  fi
+else
+  mkdir -p client
+  cat > client/index.html <<'HTML'
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Timber Money</title>
+    <script src="/scripts/timber-header.js" defer></script>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
+HTML
+fi
+
+# 5) Report
+echo "Added: client/public/mascot/timber-animated.svg"
+echo "Added: client/public/scripts/timber-header.js"
+echo "Injected: <script ...timber-header.js> into client/index.html"
+echo "Restart your app and check the top-right corner for Timber."
