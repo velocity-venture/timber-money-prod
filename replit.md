@@ -1,7 +1,7 @@
-# Shoebox to Autopilot - Turn Your Bag of Bills Into a Dashboard
+# Timber Money - AI-Powered Financial Management
 
 ## Overview
-Shoebox to Autopilot transforms financial documents into an automated money management system. Built with React, Express, PostgreSQL, and OpenAI, the application simplifies personal finance into a 3-step process: Dump, Digitize, Deploy. Its core purpose is to provide automated money management, not just debt reduction. The project aims to empower users to move from financial chaos to autopilot management.
+Timber Money is an AI-powered financial management platform featuring the "Timber" AI assistant with "Autopilot Money Ops" philosophy. Built with React, Express, PostgreSQL, and OpenAI (GPT-4o), the application transforms messy financial documents into automated money management. The platform offers mobile-first document upload, AI-powered analysis, and tiered pricing plans. Timber Money empowers users to move from financial chaos to true autopilot management.
 
 ## User Preferences
 
