@@ -1,0 +1,45 @@
+set -e
+
+# 1) Update tooltip copy to be money-specific and mission-focused
+JS="client/public/scripts/timber-header.js"
+if [ -f "$JS" ]; then
+  perl -0777 -pe "s/Tip: Track every dollar\. Great things come from doing the hard things!/Tip: Every dollar needs a job. Be wise as serpents—harmless as doves. Steward your money on purpose!/" -i "$JS"
+else
+  echo "ERROR: client/public/scripts/timber-header.js not found."; exit 1
+fi
+
+# 2) Add per-page microcopy map (home, pricing, dashboard). Falls back to default if no match.
+perl -0777 -pe 's/var showOn = \[\/pricing\/i, \/dashboard\/i, \/^\\\/$\//\];\s*var tip = el.querySelector\(\'#timber-tip\'\);[\s\S]*?if \(showOn.some\(function\(rx\)\{ return rx.test\(path\); \}\)\) \{\s*setTimeout\(function\(\)\{ tip.style.display = \'block\'; \}, 1200\);\s*setTimeout\(function\(\)\{ tip.style.display = \'none\'; \}, 5200\);\s*\/\/ Hover to re-show[\s\S]*?\}/(function(){\n    var TIP_COPY = [\n      { match: /^\\/$/, text: "Welcome back. Every dollar needs a job." },\n      { match: /pricing/i, text: "Pro pays for itself when you track and plan weekly." },\n      { match: /dashboard/i, text: "Small habits compound. Log today—it matters." }\n    ];\n    var conf = TIP_COPY.find(function(c){ return c.match.test(path); });\n    var tip = el.querySelector("#timber-tip");\n    if (conf) { tip.textContent = conf.text; }\n    setTimeout(function(){ tip.style.display = "block"; }, 1200);\n    setTimeout(function(){ tip.style.display = "none"; }, 5200);\n    el.addEventListener("mouseenter", function(){ tip.style.display = "block"; });\n    el.addEventListener("mouseleave", function(){ tip.style.display = "none"; });\n  })();/i' -i "$JS"
+
+# 3) Add a finance-first color theme toggle (subtle outline for mascot container)
+CSS_PATH="client/public/styles/timber-badge.css"
+mkdir -p client/public/styles
+if [ ! -f "$CSS_PATH" ]; then
+  cat > "$CSS_PATH" <<'CSS'
+.timber-badge{
+  display:inline-flex;align-items:center;gap:.4rem;
+  font:600 12px/1.1 system-ui, -apple-system, Segoe UI, Inter, Arial, sans-serif;
+  color:#0f172a;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;
+  padding:.35rem .6rem;
+}
+.timber-badge img{width:16px;height:16px;display:block}
+CSS
+fi
+
+# 4) Slight outline for visibility on light/dark backgrounds
+PATCH_JS=$(cat <<'EOF'
+(function(){
+  var container = document.getElementById('timber-header');
+  if (!container) return;
+  // Finance theme outline (subtle emerald hint)
+  container.style.boxShadow = '0 0 0 1px rgba(16,185,129,.35), 0 6px 18px rgba(0,0,0,.18)';
+})();
+EOF
+)
+# Inject after attach() runs by appending a new inline script loader
+perl -0777 -pe "s/(attach\(\);\s*\}\)\(\);\s*)/\\1\n  // Theme touch\n  (function(){\n    try{ $PATCH_JS }catch(e){}\n  })();\n/i" -i "$JS"
+
+# 5) Touch to trigger rebuild
+date > .rebuild_touch
+
+echo "Timber kept with improved money-focused copy, per-page tips, and subtle finance theme. Restart and hard refresh."
