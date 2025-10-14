@@ -51,8 +51,8 @@ Timber Money is an AI-powered financial management platform featuring the "Timbe
 ### Database Schema
 - **Users**: Managed by Replit Auth with subscription tracking (stripeCustomerId, stripeSubscriptionId, subscriptionStatus, subscriptionPlan); session management via PostgreSQL.
 - **Documents**: Enhanced schema for dual upload system
-  - Core fields: userId, fileName, fileType, documentType, status, analysisData
-  - PDF/OCR fields: parsed (jsonb), size, pages, sourcePath, needsReview
+  - Core fields: userId, fileName, fileType, documentType, status, analysisData (stores both AI analysis and PDF/OCR extracted data)
+  - PDF/OCR fields: size, pages, sourcePath, needsReview
   - Supports both AI vision analysis and direct text extraction workflows
 - **Debts**: Tracks debts with principal, interest rate, and minimum payments.
 - **Assets**: Tracks assets like bank accounts, investments, and property.
