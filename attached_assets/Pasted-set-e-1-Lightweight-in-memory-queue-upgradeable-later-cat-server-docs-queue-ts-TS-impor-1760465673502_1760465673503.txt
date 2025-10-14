@@ -1,0 +1,63 @@
+set -e
+
+# 1) Lightweight in-memory queue (upgradeable later)
+cat > server/docs-queue.ts <<'TS'
+import { EventEmitter } from "events";
+import { db } from "./db";
+import { randomUUID } from "crypto";
+
+type Job = { id: string; docId: string; createdAt: number; };
+
+class Q extends EventEmitter {
+  private q: Job[] = [];
+  private working = false;
+
+  enqueue(docId: string){
+    const job: Job = { id: randomUUID(), docId, createdAt: Date.now() };
+    this.q.push(job);
+    this.tick();
+    return job.id;
+  }
+
+  private async tick(){
+    if (this.working) return;
+    this.working = true;
+    while (this.q.length){
+      const job = this.q.shift()!;
+      try{
+        this.emit("start", job);
+        // Simulate heavy processing; mark doc for re-parse flag in future
+        await new Promise(r=>setTimeout(r, 50));
+        this.emit("done", job);
+      }catch(e){
+        this.emit("error", job, e);
+      }
+    }
+    this.working = false;
+  }
+}
+
+export const docsQueue = new Q();
+
+// Tie into DB status updates (listeners)
+docsQueue.on("start", async (job)=> {
+  await db.execute(`update documents set status='processing', updated_at=now() where id=$1`, [job.docId]);
+});
+docsQueue.on("done", async (job)=> {
+  // No-op here; extraction already done in step 1. Kept for future enrichment passes.
+  await db.execute(`update documents set updated_at=now() where id=$1`, [job.docId]);
+});
+docsQueue.on("error", async (job, e)=> {
+  await db.execute(`update documents set status='failed', updated_at=now() where id=$1`, [job.docId]);
+});
+TS
+
+# 2) Enqueue on upload end (quick patch): add enqueue call in docs-intake
+perl -0777 -pe 's|(import { db } from "./db";\nimport { documents } from "./schema";)|\1\nimport { docsQueue } from "./docs-queue";|' -i server/docs-intake.ts
+perl -0777 -pe 's|(res.json\({ id, status: text \? "parsed" : "review_needed", pages, parsed }\);)|docsQueue.enqueue(id);\n    \1|' -i server/docs-intake.ts
+
+# 3) Status endpoint
+perl -0777 -pe 's|(docsRouter.get\("\/:id", async \(req: Request, res: Response\) => {[\s\S]*?}\);\n)|\1\n// List by status\ndocsRouter.get("/", async (req, res)=>{\n  const s = String(req.query.status||"").toLowerCase();\n  const rows = s ? await db.execute(`select * from documents where status = $1 order by created_at desc limit 100`, [s])\n                 : await db.execute(`select * from documents order by created_at desc limit 100`);\n  res.json(rows.rows||[]);\n});\n|' -i server/docs-intake.ts
+
+date > .rebuild_touch
+echo "Step 2 done: Queue enabled; GET /api/docs?status=parsed to list."

@@ -6,6 +6,7 @@ import Tesseract from "tesseract.js";
 import { db } from "./db";
 import { documents } from "../shared/schema";
 import { eq } from "drizzle-orm";
+import { docsQueue } from "./docs-queue";
 
 export const docsRouter = Router();
 
@@ -130,6 +131,9 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
       })
       .returning();
 
+    // Enqueue for asynchronous processing
+    docsQueue.enqueue(doc.id);
+
     res.json({
       id: doc.id,
       fileName: name,
@@ -181,11 +185,26 @@ docsRouter.get("/", async (req: any, res: Response) => {
     }
 
     const userId = req.user.claims.sub;
-    const docs = await db
+    const statusFilter = req.query.status as string | undefined;
+    
+    let query = db
       .select()
       .from(documents)
-      .where(eq(documents.userId, userId))
-      .orderBy(documents.uploadedAt);
+      .where(eq(documents.userId, userId));
+
+    // Apply status filter if provided
+    if (statusFilter) {
+      const { and } = await import("drizzle-orm");
+      query = db
+        .select()
+        .from(documents)
+        .where(and(
+          eq(documents.userId, userId),
+          eq(documents.status, statusFilter)
+        ));
+    }
+
+    const docs = await query.orderBy(documents.uploadedAt).limit(100);
 
     res.json(docs);
   } catch (e) {
