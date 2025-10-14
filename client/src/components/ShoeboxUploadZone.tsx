@@ -136,29 +136,35 @@ export function ShoeboxUploadZone({ mode }: ShoeboxUploadZoneProps) {
   const analyzeAllDocuments = async () => {
     setIsProcessing(true);
     
-    // Process files in batches
-    for (const file of files.filter(f => f.status === "pending")) {
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id
-            ? { ...f, status: "uploading", progress: 30 }
-            : f
-        )
-      );
+    try {
+      // Process files in batches
+      for (const file of files.filter(f => f.status === "pending")) {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === file.id
+              ? { ...f, status: "uploading", progress: 30 }
+              : f
+          )
+        );
 
-      await uploadMutation.mutateAsync(file);
-    }
+        try {
+          await uploadMutation.mutateAsync(file);
+        } catch (error) {
+          console.error(`Failed to upload ${file.name}:`, error);
+        }
+      }
 
-    // Show success message
-    const successCount = files.filter(f => f.status === "completed").length;
-    if (successCount > 0) {
-      toast({
-        title: "Documents Analyzed!",
-        description: `Successfully processed ${successCount} documents. Your financial dashboard is ready.`,
-      });
+      // Show success message
+      const successCount = files.filter(f => f.status === "completed").length;
+      if (successCount > 0) {
+        toast({
+          title: "Documents Analyzed!",
+          description: `Successfully processed ${successCount} documents. Your financial dashboard is ready.`,
+        });
+      }
+    } finally {
+      setIsProcessing(false);
     }
-    
-    setIsProcessing(false);
   };
 
   const removeFile = (fileId: string) => {
