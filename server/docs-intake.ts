@@ -3,8 +3,6 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import Tesseract from "tesseract.js";
-
-const pdfParse = require("pdf-parse");
 import { db } from "./db";
 import { documents } from "../shared/schema";
 import { eq } from "drizzle-orm";
@@ -54,6 +52,7 @@ function normalizeExtractedData(text: string, fileName: string) {
 
 async function extractFromPDF(filePath: string) {
   const buf = fs.readFileSync(filePath);
+  const pdfParse = (await import("pdf-parse")).default;
   const data = await pdfParse(buf);
   const text = (data.text || "").trim();
   return { text, pages: data.numpages || 1 };
