@@ -1,0 +1,74 @@
+set -e
+
+# ==== CONFIG ====
+DOMAIN="${DOMAIN_OVERRIDE:-timbermoney.ai}"     # set DOMAIN_OVERRIDE in Secrets to test a different host
+PROTO="https"                                   # your app enforces https
+CHECKOUT_PATH="/api/checkout/test"              # your existing test endpoint that returns {url}
+PLANS=("family_monthly" "pro_annual" "family_annual" "pro_monthly")
+STRIPE_KEY="$STRIPE_SECRET_KEY"                 # must be set in Replit Secrets (sk_test_... or sk_live_...)
+TIMEOUT=15
+
+if [ -z "$STRIPE_KEY" ]; then
+  echo "ERROR: STRIPE_SECRET_KEY not set in Secrets."; exit 1
+fi
+
+echo "==> Target: $PROTO://$DOMAIN"
+echo "==> Testing plans: ${PLANS[*]}"
+
+fail=0
+mkdir -p tmp_stripe
+REPORT="tmp_stripe/report.txt"
+: > "$REPORT"
+
+echo "==> 1) Smoke test: each /api/checkout/test/:plan returns a valid Stripe Checkout URL"
+for plan in "${PLANS[@]}"; do
+  URL="$PROTO://$DOMAIN$CHECKOUT_PATH/$plan"
+  echo "-- Hitting $URL"
+  RESP=$(curl -sS -m $TIMEOUT "$URL" || true)
+  CHK_URL=$(echo "$RESP" | perl -0777 -ne 'print $1 if /"url"\s*:\s*"([^"]+)"/')
+  if [[ "$CHK_URL" =~ ^https://checkout\.stripe\.com/ ]]; then
+    echo "OK: $plan -> $CHK_URL" | tee -a "$REPORT"
+  else
+    echo "FAIL: $plan did not return a valid Stripe Checkout URL. Response: $RESP" | tee -a "$REPORT"
+    fail=1
+  fi
+done
+
+echo "==> 2) Validate Stripe can retrieve the newly created Checkout Sessions (API-level)"
+# Extract Checkout session IDs from URLs (cs_test_xxx)
+SESSION_IDS=($(grep -oE 'https://checkout\.stripe\.com/[^\s]+' "$REPORT" | sed -E 's|.*/(cs_[a-zA-Z0-9_]+).*|\1|' | sort -u))
+
+if [ ${#SESSION_IDS[@]} -eq 0 ]; then
+  echo "WARN: No session URLs captured. Skipping API validation."
+else
+  echo "Found ${#SESSION_IDS[@]} session(s): ${SESSION_IDS[*]}"
+  for sid in "${SESSION_IDS[@]}"; do
+    echo "-- Retrieving session $sid"
+    SESSION_JSON=$(curl -sS https://api.stripe.com/v1/checkout/sessions/"$sid" -u "$STRIPE_KEY":)
+    STATUS=$(echo "$SESSION_JSON" | jq -r '.status' 2>/dev/null || echo "")
+    MODE=$(echo "$SESSION_JSON"   | jq -r '.mode'   2>/dev/null || echo "")
+    CUST=$(echo "$SESSION_JSON"   | jq -r '.customer' 2>/dev/null || echo "")
+    META_USER=$(echo "$SESSION_JSON" | jq -r '.metadata.userId // empty' 2>/dev/null || echo "")
+    echo "Stripe session: id=$sid status=${STATUS:-unknown} mode=${MODE:-unknown} customer=${CUST:-none} metadata.userId=${META_USER:-none}" | tee -a "$REPORT"
+  done
+fi
+
+echo "==> 3) Optional: Verify webhook endpoint health (expects 200)"
+WEBHOOK_ENDPOINT="$PROTO://$DOMAIN/api/stripe/webhook"
+echo "-- Probing webhook endpoint (OPTIONS/HEAD safe checks)"
+# We avoid POST signature verification; just check route exists
+CODE_HEAD=$(curl -s -o /dev/null -w "%{http_code}" -I "$WEBHOOK_ENDPOINT" || true)
+CODE_OPT=$(curl -s -o /dev/null -w "%{http_code}" -X OPTIONS "$WEBHOOK_ENDPOINT" || true)
+echo "Webhook HEAD=$CODE_HEAD OPTIONS=$CODE_OPT" | tee -a "$REPORT"
+
+echo "==> 4) Summary"
+echo "---- Report ----"
+cat "$REPORT" || true
+echo "----------------"
+
+if [ "$fail" -ne 0 ]; then
+  echo "RESULT: FAILURES detected. See report above."
+  exit 1
+else
+  echo "RESULT: Smoke tests passed for session creation. Next step: manual card test (4242...) to complete a session and observe webhook delivery."
+fi
