@@ -62,6 +62,9 @@ export const documents = pgTable("documents", {
   sourcePath: varchar("source_path", { length: 512 }), // Disk path or URL (deprecated, use s3Key)
   s3Key: varchar("s3_key", { length: 512 }), // S3 object key for cloud storage
   needsReview: boolean("needs_review").default(false), // Flag for manual review
+  attempts: integer("attempts").default(0), // Number of processing attempts
+  lastError: text("last_error"), // Last error message
+  lastErrorAt: timestamp("last_error_at"), // Timestamp of last error
 });
 
 export const insertDocumentSchema = createInsertSchema(documents).omit({
