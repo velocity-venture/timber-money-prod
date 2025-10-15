@@ -1,0 +1,319 @@
+#!/usr/bin/env python3
+"""
+worker.py
+Background worker for Timber Money — adapted to existing documents schema.
+Writes results to documents.analysisData, updates status/attempts/processedAt.
+"""
+
+import os
+import time
+import json
+import re
+import traceback
+from datetime import datetime
+
+# External libs:
+# pip install sqlalchemy psycopg2-binary boto3 pytesseract pillow pdf2image requests python-dotenv
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
+from PIL import Image
+import pytesseract
+from pdf2image import convert_from_path
+
+# ---------- CONFIG ----------
+DATABASE_URL = os.getenv("DATABASE_URL")  # postgres connection string
+S3_BUCKET = os.getenv("S3_BUCKET")
+S3_REGION = os.getenv("S3_REGION", "us-east-1")
+AWS_USE = bool(os.getenv("AWS_USE", "").strip())  # set to "1" to enable S3 usage
+OCR_FALLBACK_API = os.getenv("OCR_FALLBACK_API")  # optional external OCR
+POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "6"))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", "5"))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
+ANOMALY_AMOUNT_THRESHOLD = float(os.getenv("ANOMALY_AMOUNT_THRESHOLD", "5000.0"))
+
+# Merchant normalization (example)
+MERCHANT_MAP = {
+    "walmart inc": "Walmart",
+    "wal-mart": "Walmart",
+    "starbucks coffee": "Starbucks",
+    "amazon.com": "Amazon",
+}
+
+CATEGORY_KEYWORDS = {
+    "grocer": ["grocery", "supermarket", "walmart", "safeway", "kroger"],
+    "dining": ["coffee", "restaurant", "cafe", "starbucks", "diner"],
+    "travel": ["airlines", "uber", "lyft", "hotel", "car rental"],
+    "utilities": ["electric", "water", "gas bill", "utility"],
+    "shopping": ["amazon", "target", "walmart", "mall"],
+}
+
+# ---------- HELPERS ----------
+def log(*args):
+    print(f"[{datetime.utcnow().isoformat()}]", *args)
+
+def connect_db(url):
+    return create_engine(url, pool_pre_ping=True, future=True)
+
+def s3_client():
+    return boto3.client("s3", region_name=S3_REGION)
+
+def download_from_s3(s3_key, local_path):
+    client = s3_client()
+    client.download_file(S3_BUCKET, s3_key, local_path)
+    return local_path
+
+def ocr_image_pil(pil_img):
+    try:
+        return pytesseract.image_to_string(pil_img)
+    except Exception:
+        return ""
+
+def ocr_pdf_local(pdf_path):
+    try:
+        pages = convert_from_path(pdf_path, dpi=200)
+        texts = []
+        for p in pages:
+            texts.append(pytesseract.image_to_string(p))
+        return "\n".join(texts)
+    except Exception:
+        return ""
+
+def ocr_fallback_api(file_bytes):
+    if not OCR_FALLBACK_API:
+        return ""
+    try:
+        import requests
+        resp = requests.post(OCR_FALLBACK_API, files={"file": ("file", file_bytes)})
+        if resp.status_code == 200:
+            return resp.text
+    except Exception:
+        return ""
+    return ""
+
+def detect_doc_type(text):
+    t = (text or "").lower()
+    if re.search(r"\b(invoice|invoice #|invoice no|invoice number)\b", t):
+        return "invoice"
+    if re.search(r"\b(receipt|amount paid|total paid|change)\b", t):
+        return "receipt"
+    if re.search(r"\b(statement of account|account statement|ending balance|opening balance)\b", t):
+        return "statement"
+    if len(re.findall(r"\$\s*\d", t)) > 3 or len(re.findall(r"\b\d{2}/\d{2}/\d{2,4}\b", t)) > 3:
+        return "statement"
+    return "unknown"
+
+def find_date(text):
+    m = re.search(r"(\d{4}-\d{2}-\d{2})|(\d{2}/\d{2}/\d{2,4})", text or "")
+    return m.group(0) if m else None
+
+def find_total(text):
+    if not text:
+        return None
+    m = re.search(r"(total due|balance due|amount due|total)\s*[:\-\s]*\$\s*([0-9\.,]+)", text, re.I)
+    if m:
+        return float(m.group(2).replace(",", ""))
+    m2 = re.search(r"\$\s*([0-9\.,]+)\s*(?:total|subtotal)?", text)
+    if m2:
+        return float(m2.group(1).replace(",", ""))
+    all_amounts = re.findall(r"\$\s*([0-9\.,]+)", text)
+    if all_amounts:
+        nums = [float(a.replace(",", "")) for a in all_amounts]
+        return max(nums)
+    return None
+
+def normalize_merchant(raw_name):
+    if not raw_name:
+        return None
+    s = raw_name.lower().strip()
+    for k, v in MERCHANT_MAP.items():
+        if k in s:
+            return v
+    s2 = re.sub(r"[^\w\s]", "", s)
+    return s2.title() if s2 else None
+
+def categorize_text(text):
+    t = (text or "").lower()
+    for cat, keys in CATEGORY_KEYWORDS.items():
+        for k in keys:
+            if k in t:
+                return cat
+    return "uncategorized"
+
+def anomaly_checks(parsed):
+    anomalies = []
+    total = parsed.get("total_amount")
+    if total is not None and abs(total) >= ANOMALY_AMOUNT_THRESHOLD:
+        anomalies.append({"type": "large_amount", "total": total})
+    if total is not None and total < 0:
+        anomalies.append({"type": "negative_total", "total": total})
+    return anomalies
+
+# ---------- SIMPLE PARSERS ----------
+def parse_receipt(text):
+    parsed = {"type": "receipt"}
+    parsed["date"] = find_date(text)
+    parsed["total_amount"] = find_total(text)
+    parsed["merchant_raw"] = (text or "").strip().splitlines()[0] if (text or "").strip() else None
+    parsed["merchant"] = normalize_merchant(parsed.get("merchant_raw"))
+    parsed["category"] = categorize_text(text)
+    parsed["confidence"] = 0.75
+    return parsed
+
+def parse_invoice(text):
+    parsed = {"type": "invoice"}
+    inv = re.search(r"(?:invoice\s*(?:#|no\.?)\s*[:#]?\s*(\S+))", text or "", re.I) or re.search(r"invoice\s*[:\s]*(\S+)", text or "", re.I)
+    parsed["invoice_number"] = inv.group(1) if inv else None
+    parsed["date"] = find_date(text)
+    parsed["total_amount"] = find_total(text)
+    parsed["merchant_raw"] = (text or "").strip().splitlines()[0] if (text or "").strip() else None
+    parsed["merchant"] = normalize_merchant(parsed.get("merchant_raw"))
+    parsed["category"] = categorize_text(text)
+    parsed["confidence"] = 0.7
+    return parsed
+
+def parse_statement(text):
+    parsed = {"type": "statement"}
+    parsed["date"] = find_date(text)
+    parsed["total_amount"] = find_total(text)
+    parsed["merchant"] = None
+    parsed["category"] = "statement"
+    parsed["confidence"] = 0.6
+    lines = (text or "").splitlines()
+    txs = []
+    for line in lines:
+        m = re.search(r"(\d{2}/\d{2}/\d{2,4})\s+(.+?)\s+\$?\s*([0-9\.,]+)", line)
+        if m:
+            txs.append({"date": m.group(1), "description": m.group(2).strip(), "amount": float(m.group(3).replace(",", ""))})
+    parsed["transactions"] = txs
+    return parsed
+
+# ---------- MAIN PROCESSING ----------
+def process_document_row(row, conn):
+    doc_id = row["id"]
+    s3_key = row.get("s3_key")
+    local_path = row.get("local_path")
+    tmp_local = f"/tmp/doc_{doc_id}"
+    try:
+        log("Processing", doc_id, "status:", row.get("status"))
+        # fetch file
+        file_path = None
+        if AWS_USE and s3_key:
+            download_from_s3(s3_key, tmp_local)
+            file_path = tmp_local
+        elif local_path and os.path.exists(local_path):
+            file_path = local_path
+        else:
+            log("Missing file for", doc_id)
+            conn.execute(text("""
+                UPDATE documents
+                   SET attempts = COALESCE(attempts,0) + 1,
+                       last_error = :err,
+                       last_error_at = NOW()
+                 WHERE id = :id
+            """), {"err": "missing_file", "id": doc_id})
+            return
+
+        text_content = ""
+        if file_path.lower().endswith(".pdf"):
+            log("OCR pdf", doc_id)
+            text_content = ocr_pdf_local(file_path)
+        else:
+            try:
+                img = Image.open(file_path)
+                text_content = ocr_image_pil(img)
+            except Exception:
+                with open(file_path, "rb") as fh:
+                    text_content = ocr_fallback_api(fh.read())
+
+        if len((text_content or "").strip()) < 30:
+            log("Low OCR; trying fallback for", doc_id)
+            with open(file_path, "rb") as fh:
+                text_content = ocr_fallback_api(fh.read())
+
+        doc_type = detect_doc_type(text_content)
+        if doc_type == "receipt":
+            parsed = parse_receipt(text_content)
+        elif doc_type == "invoice":
+            parsed = parse_invoice(text_content)
+        elif doc_type == "statement":
+            parsed = parse_statement(text_content)
+        else:
+            parsed = {"type": "unknown", "raw_text_snippet": (text_content or "")[:200], "confidence": 0.35}
+
+        parsed["merchant_normalized"] = normalize_merchant(parsed.get("merchant") or parsed.get("merchant_raw"))
+        parsed["anomalies"] = anomaly_checks(parsed)
+        parsed["parsed_at"] = datetime.utcnow().isoformat()
+
+        status = "parsed"
+        if parsed.get("confidence", 0) < 0.5 or parsed["anomalies"]:
+            status = "needs_review"
+
+        # write back to documents.analysisData and update status/attempts/processedAt
+        conn.execute(text("""
+            UPDATE documents
+               SET "analysisData" = :p,
+                   status = :status,
+                   attempts = COALESCE(attempts,0) + 1,
+                   "processedAt" = NOW(),
+                   last_error = NULL,
+                   last_error_at = NULL
+             WHERE id = :id
+        """), {"p": json.dumps(parsed), "status": status, "id": doc_id})
+
+        log("Processed", doc_id, "->", status)
+    except Exception as e:
+        tb = traceback.format_exc()
+        log("Error for", doc_id, str(e))
+        conn.execute(text("""
+            UPDATE documents
+               SET attempts = COALESCE(attempts,0) + 1,
+                   last_error = :err,
+                   last_error_at = NOW()
+             WHERE id = :id
+        """), {"err": str(e)[:2000], "id": doc_id})
+        attempts_row = conn.execute(text("SELECT attempts FROM documents WHERE id = :id"), {"id": doc_id}).fetchone()
+        if attempts_row and attempts_row[0] >= MAX_RETRIES:
+            conn.execute(text("UPDATE documents SET status='errored' WHERE id = :id"), {"id": doc_id})
+            log("Moved to errored:", doc_id)
+
+def main():
+    if not DATABASE_URL:
+        log("ERROR: DATABASE_URL not set")
+        return
+    engine = connect_db(DATABASE_URL)
+    log("Worker started. AWS_USE=", AWS_USE, "Polling every", POLL_INTERVAL, "s")
+    while True:
+        try:
+            with engine.begin() as conn:
+                rows = conn.execute(text("""
+                    SELECT id, "s3Key" AS s3_key, "sourcePath" AS local_path, status, attempts
+                      FROM documents
+                     WHERE status IN ('uploaded','queued','ocr_needed')
+                  ORDER BY "uploadedAt"
+                     LIMIT :limit
+                     FOR UPDATE SKIP LOCKED
+                """), {"limit": BATCH_SIZE}).mappings().all()
+
+                if not rows:
+                    pass
+                else:
+                    for row in rows:
+                        try:
+                            process_document_row(row, conn)
+                        except Exception:
+                            log("Row-level error; continuing")
+            time.sleep(POLL_INTERVAL)
+        except OperationalError as oe:
+            log("DB connection error, retrying in 5s:", str(oe))
+            time.sleep(5)
+        except KeyboardInterrupt:
+            log("Worker stopped by user")
+            break
+        except Exception as e:
+            log("Top-level error:", str(e))
+            time.sleep(3)
+
+if __name__ == "__main__":
+    main()
