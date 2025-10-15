@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-worker.py
-Background worker for Timber Money — adapted to existing documents schema.
-Writes results to documents.analysisData, updates status/attempts/processedAt.
+worker.py — Timber Money worker with AWS Textract OCR fallback/primary.
+Behavior:
+ - If AWS_TEXTRACT == "1" and AWS_USE == "1", images (and pdf conversions) are processed with Textract.
+ - Otherwise falls back to local pytesseract/pdf2image OCR logic.
+Writes results to documents.analysis_data, updates status/attempts/processed_at.
 """
 
 import os
@@ -11,6 +13,7 @@ import json
 import re
 import traceback
 from datetime import datetime
+from io import BytesIO
 
 # External libs:
 # pip install sqlalchemy psycopg2-binary boto3 pytesseract pillow pdf2image requests python-dotenv
@@ -24,9 +27,10 @@ from pdf2image import convert_from_path
 
 # ---------- CONFIG ----------
 DATABASE_URL = os.getenv("DATABASE_URL")  # postgres connection string
-S3_BUCKET = os.getenv("AWS_S3_BUCKET")
-S3_REGION = os.getenv("AWS_REGION", "us-east-1")
-AWS_USE = bool(os.getenv("AWS_USE", "").strip())  # set to "1" to enable S3 usage
+S3_BUCKET = os.getenv("AWS_S3_BUCKET", os.getenv("S3_BUCKET"))
+S3_REGION = os.getenv("AWS_REGION", os.getenv("S3_REGION", "us-east-1"))
+AWS_USE = os.getenv("AWS_USE", "").strip() == "1"
+AWS_TEXTRACT = os.getenv("AWS_TEXTRACT", "").strip() == "1"
 OCR_FALLBACK_API = os.getenv("OCR_FALLBACK_API")  # optional external OCR
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "6"))
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "5"))
@@ -64,10 +68,47 @@ def download_from_s3(s3_key, local_path):
     client.download_file(S3_BUCKET, s3_key, local_path)
     return local_path
 
+# ---------- Textract OCR ----------
+def textract_client():
+    return boto3.client("textract", region_name=S3_REGION)
+
+def ocr_with_textract_bytes(file_bytes):
+    """Use Textract DetectDocumentText on raw image bytes (suitable for PNG/JPG)."""
+    try:
+        client = textract_client()
+        resp = client.detect_document_text(Document={'Bytes': file_bytes})
+        lines = [b.get('DetectedText', '') for b in resp.get('Blocks', []) if b.get('BlockType') == 'LINE']
+        return "\n".join(lines)
+    except Exception as e:
+        log("Textract error:", str(e))
+        return ""
+
+def ocr_with_textract_from_path(path):
+    """Read file and call Textract. If PDF, convert to images then call Textract on each page."""
+    try:
+        ext = path.lower().split('.')[-1]
+        if ext == 'pdf':
+            # convert pages to images, then call Textract per page
+            pages = convert_from_path(path, dpi=200)
+            texts = []
+            for p in pages:
+                buf = BytesIO()
+                p.save(buf, format='PNG')
+                texts.append(ocr_with_textract_bytes(buf.getvalue()))
+            return "\n".join(texts)
+        else:
+            with open(path, "rb") as fh:
+                return ocr_with_textract_bytes(fh.read())
+    except Exception as e:
+        log("Textract-from-path error:", str(e))
+        return ""
+
+# ---------- Local OCR fallbacks ----------
 def ocr_image_pil(pil_img):
     try:
         return pytesseract.image_to_string(pil_img)
-    except Exception:
+    except Exception as e:
+        log("pytesseract error:", str(e))
         return ""
 
 def ocr_pdf_local(pdf_path):
@@ -77,7 +118,8 @@ def ocr_pdf_local(pdf_path):
         for p in pages:
             texts.append(pytesseract.image_to_string(p))
         return "\n".join(texts)
-    except Exception:
+    except Exception as e:
+        log("pdf2image+pytesseract error:", str(e))
         return ""
 
 def ocr_fallback_api(file_bytes):
@@ -88,10 +130,11 @@ def ocr_fallback_api(file_bytes):
         resp = requests.post(OCR_FALLBACK_API, files={"file": ("file", file_bytes)})
         if resp.status_code == 200:
             return resp.text
-    except Exception:
-        return ""
+    except Exception as e:
+        log("OCR fallback API error:", str(e))
     return ""
 
+# ---------- Parsing & enrichment ----------
 def detect_doc_type(text):
     t = (text or "").lower()
     if re.search(r"\b(invoice|invoice #|invoice no|invoice number)\b", t):
@@ -111,15 +154,28 @@ def find_date(text):
 def find_total(text):
     if not text:
         return None
+    # Try patterns with decimals first
     m = re.search(r"(total due|balance due|amount due|total)\s*[:\-\s]*\$\s*([0-9\.,]+)", text, re.I)
     if m:
         return float(m.group(2).replace(",", ""))
     m2 = re.search(r"\$\s*([0-9\.,]+)\s*(?:total|subtotal)?", text)
     if m2:
         return float(m2.group(1).replace(",", ""))
+    # Fallback: attempt to correct obvious missing-decimal patterns (e.g., 1234 -> 12.34 if likely)
     all_amounts = re.findall(r"\$\s*([0-9\.,]+)", text)
     if all_amounts:
-        nums = [float(a.replace(",", "")) for a in all_amounts]
+        nums = []
+        for a in all_amounts:
+            clean = a.replace(",", "")
+            # If no decimal and length > 2, guess last two digits are cents
+            if "." not in clean and len(clean) > 2:
+                try:
+                    val = float(clean[:-2] + "." + clean[-2:])
+                except:
+                    val = float(clean)
+            else:
+                val = float(clean)
+            nums.append(val)
         return max(nums)
     return None
 
@@ -150,7 +206,6 @@ def anomaly_checks(parsed):
         anomalies.append({"type": "negative_total", "total": total})
     return anomalies
 
-# ---------- SIMPLE PARSERS ----------
 def parse_receipt(text):
     parsed = {"type": "receipt"}
     parsed["date"] = find_date(text)
@@ -216,19 +271,25 @@ def process_document_row(row, conn):
             return
 
         text_content = ""
-        if file_path.lower().endswith(".pdf"):
-            log("OCR pdf", doc_id)
-            text_content = ocr_pdf_local(file_path)
+        # Use Textract if configured
+        if AWS_USE and AWS_TEXTRACT:
+            log("Using Textract for OCR:", doc_id)
+            text_content = ocr_with_textract_from_path(file_path)
         else:
-            try:
-                img = Image.open(file_path)
-                text_content = ocr_image_pil(img)
-            except Exception:
-                with open(file_path, "rb") as fh:
-                    text_content = ocr_fallback_api(fh.read())
+            # local OCR logic
+            if file_path.lower().endswith(".pdf"):
+                log("OCR pdf local", doc_id)
+                text_content = ocr_pdf_local(file_path)
+            else:
+                try:
+                    img = Image.open(file_path)
+                    text_content = ocr_image_pil(img)
+                except Exception:
+                    with open(file_path, "rb") as fh:
+                        text_content = ocr_fallback_api(fh.read())
 
-        if len((text_content or "").strip()) < 30:
-            log("Low OCR; trying fallback for", doc_id)
+        if len((text_content or "").strip()) < 30 and OCR_FALLBACK_API:
+            log("Low OCR; trying fallback API for", doc_id)
             with open(file_path, "rb") as fh:
                 text_content = ocr_fallback_api(fh.read())
 
@@ -263,7 +324,7 @@ def process_document_row(row, conn):
              WHERE id = :id
         """), {"p": json.dumps(parsed), "status": status, "needs_review": needs_review, "id": doc_id})
 
-        log("Processed", doc_id, "->", status)
+        log("Processed", doc_id, "->", status, f"(needs_review={needs_review})")
     except Exception as e:
         tb = traceback.format_exc()
         log("Error for", doc_id, str(e))
@@ -284,7 +345,7 @@ def main():
         log("ERROR: DATABASE_URL not set")
         return
     engine = connect_db(DATABASE_URL)
-    log("Worker started. AWS_USE=", AWS_USE, "Polling every", POLL_INTERVAL, "s")
+    log("Worker started. AWS_USE=", AWS_USE, "AWS_TEXTRACT=", AWS_TEXTRACT, "Polling every", POLL_INTERVAL, "s")
     while True:
         try:
             with engine.begin() as conn:

@@ -137,7 +137,9 @@ Timber Money is an AI-powered financial management platform featuring the "Timbe
    - Writes results to `documents.analysis_data`
 
 2. **Features**:
-   - **Advanced OCR**: PDF and image processing using Tesseract and pdf2image
+   - **AWS Textract OCR** (optional): Cloud-based OCR with superior accuracy when enabled
+   - **Local OCR Fallback**: PDF and image processing using Tesseract and pdf2image
+   - **Decimal Point Correction**: Auto-corrects missing decimals (e.g., "1234" → "12.34")
    - **Merchant Normalization**: Maps raw merchant names to standardized values
    - **Smart Categorization**: Categorizes transactions (grocery, dining, travel, utilities, shopping)
    - **Anomaly Detection**: Flags large amounts (>$5000) and negative totals
@@ -154,6 +156,7 @@ Timber Money is an AI-powered financial management platform featuring the "Timbe
    - `AWS_S3_BUCKET`: S3 bucket name (required if using S3)
    - `AWS_REGION`: AWS region (default: us-east-1)
    - `AWS_USE`: Set to "1" to enable S3 downloads
+   - `AWS_TEXTRACT`: Set to "1" to enable AWS Textract OCR (superior accuracy, requires AWS credentials)
    - `POLL_INTERVAL`: Seconds between polls (default: 6)
    - `BATCH_SIZE`: Documents per batch (default: 5)
    - `MAX_RETRIES`: Max retry attempts (default: 3)
