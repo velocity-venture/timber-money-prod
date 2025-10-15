@@ -7,7 +7,7 @@ import { db } from "./db";
 import { documents } from "../shared/schema";
 import { eq, and } from "drizzle-orm";
 import { enrich } from "./docs-parse-pass";
-import { uploadToS3 } from "./s3-storage";
+import { uploadToS3, getSignedDownloadUrl } from "./s3-storage";
 
 export const docsRouter = Router();
 
@@ -240,5 +240,45 @@ docsRouter.get("/", async (req: any, res: Response) => {
   } catch (e) {
     console.error("[docs] list error:", e);
     res.status(500).json({ error: "Failed to list documents" });
+  }
+});
+
+docsRouter.get("/:id/download", async (req: any, res: Response) => {
+  try {
+    if (!req.user?.claims?.sub) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const userId = req.user.claims.sub;
+    const id = req.params.id;
+    const [doc] = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.id, id))
+      .limit(1);
+
+    if (!doc) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    if (doc.userId !== userId) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    if (!doc.s3Key) {
+      return res.status(400).json({ error: "Document not stored in S3" });
+    }
+
+    // Generate signed URL valid for 1 hour
+    const signedUrl = await getSignedDownloadUrl(doc.s3Key, 3600);
+
+    res.json({
+      url: signedUrl,
+      fileName: doc.fileName,
+      expiresIn: 3600,
+    });
+  } catch (e) {
+    console.error("[docs] download error:", e);
+    res.status(500).json({ error: "Failed to generate download URL" });
   }
 });
