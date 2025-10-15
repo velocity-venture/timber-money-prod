@@ -193,7 +193,7 @@ def parse_statement(text):
 def process_document_row(row, conn):
     doc_id = row["id"]
     s3_key = row.get("s3_key")
-    local_path = row.get("local_path")
+    source_path = row.get("source_path")
     tmp_local = f"/tmp/doc_{doc_id}"
     try:
         log("Processing", doc_id, "status:", row.get("status"))
@@ -202,8 +202,8 @@ def process_document_row(row, conn):
         if AWS_USE and s3_key:
             download_from_s3(s3_key, tmp_local)
             file_path = tmp_local
-        elif local_path and os.path.exists(local_path):
-            file_path = local_path
+        elif source_path and os.path.exists(source_path):
+            file_path = source_path
         else:
             log("Missing file for", doc_id)
             conn.execute(text("""
@@ -246,21 +246,22 @@ def process_document_row(row, conn):
         parsed["anomalies"] = anomaly_checks(parsed)
         parsed["parsed_at"] = datetime.utcnow().isoformat()
 
-        status = "parsed"
-        if parsed.get("confidence", 0) < 0.5 or parsed["anomalies"]:
-            status = "needs_review"
+        # Set status to 'completed' and use needs_review flag for low confidence/anomalies
+        status = "completed"
+        needs_review = parsed.get("confidence", 0) < 0.5 or bool(parsed["anomalies"])
 
-        # write back to documents.analysisData and update status/attempts/processedAt
+        # write back to documents.analysis_data and update status/attempts/processed_at
         conn.execute(text("""
             UPDATE documents
-               SET "analysisData" = :p,
+               SET analysis_data = :p,
                    status = :status,
+                   needs_review = :needs_review,
                    attempts = COALESCE(attempts,0) + 1,
-                   "processedAt" = NOW(),
+                   processed_at = NOW(),
                    last_error = NULL,
                    last_error_at = NULL
              WHERE id = :id
-        """), {"p": json.dumps(parsed), "status": status, "id": doc_id})
+        """), {"p": json.dumps(parsed), "status": status, "needs_review": needs_review, "id": doc_id})
 
         log("Processed", doc_id, "->", status)
     except Exception as e:
@@ -275,8 +276,8 @@ def process_document_row(row, conn):
         """), {"err": str(e)[:2000], "id": doc_id})
         attempts_row = conn.execute(text("SELECT attempts FROM documents WHERE id = :id"), {"id": doc_id}).fetchone()
         if attempts_row and attempts_row[0] >= MAX_RETRIES:
-            conn.execute(text("UPDATE documents SET status='errored' WHERE id = :id"), {"id": doc_id})
-            log("Moved to errored:", doc_id)
+            conn.execute(text("UPDATE documents SET status='failed', needs_review=true WHERE id = :id"), {"id": doc_id})
+            log("Max retries exceeded, marked as failed:", doc_id)
 
 def main():
     if not DATABASE_URL:
@@ -288,13 +289,13 @@ def main():
         try:
             with engine.begin() as conn:
                 rows = conn.execute(text("""
-                    SELECT id, "s3Key" AS s3_key, "sourcePath" AS local_path, status, attempts
+                    SELECT id, s3_key, source_path, status, attempts
                       FROM documents
-                     WHERE status IN ('uploaded','queued','ocr_needed')
-                  ORDER BY "uploadedAt"
+                     WHERE status IN ('failed') AND (attempts < :max_retries OR attempts IS NULL)
+                  ORDER BY uploaded_at
                      LIMIT :limit
                      FOR UPDATE SKIP LOCKED
-                """), {"limit": BATCH_SIZE}).mappings().all()
+                """), {"limit": BATCH_SIZE, "max_retries": MAX_RETRIES}).mappings().all()
 
                 if not rows:
                     pass

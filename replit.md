@@ -126,6 +126,62 @@ Timber Money is an AI-powered financial management platform featuring the "Timbe
      - Approve documents (marks as completed, removes review flag)
    - Both protected by ADMIN_VIEW_KEY secret via x-admin-key header
 
+### Python Background Worker (worker.py)
+**Optional asynchronous document processing with advanced features:**
+
+1. **Worker Process**:
+   - Polls for documents with status: 'failed' (for retry processing)
+   - Respects MAX_RETRIES limit to prevent infinite retry loops
+   - Processes documents asynchronously in batches
+   - Uses database-level locking (FOR UPDATE SKIP LOCKED) to prevent conflicts
+   - Writes results to `documents.analysis_data`
+
+2. **Features**:
+   - **Advanced OCR**: PDF and image processing using Tesseract and pdf2image
+   - **Merchant Normalization**: Maps raw merchant names to standardized values
+   - **Smart Categorization**: Categorizes transactions (grocery, dining, travel, utilities, shopping)
+   - **Anomaly Detection**: Flags large amounts (>$5000) and negative totals
+   - **Confidence Scoring**: Assigns confidence scores to parsed data
+   - **Retry Logic**: Automatic retry with exponential backoff (max 3 attempts)
+
+3. **Document Parsing**:
+   - **Receipts**: Extracts merchant, date, total, category
+   - **Invoices**: Extracts invoice number, merchant, date, total, category
+   - **Statements**: Extracts transactions, period, totals
+
+4. **Configuration** (Environment Variables):
+   - `DATABASE_URL`: PostgreSQL connection string (auto-set by Replit)
+   - `AWS_S3_BUCKET`: S3 bucket name (required if using S3)
+   - `AWS_REGION`: AWS region (default: us-east-1)
+   - `AWS_USE`: Set to "1" to enable S3 downloads
+   - `POLL_INTERVAL`: Seconds between polls (default: 6)
+   - `BATCH_SIZE`: Documents per batch (default: 5)
+   - `MAX_RETRIES`: Max retry attempts (default: 3)
+   - `ANOMALY_AMOUNT_THRESHOLD`: Dollar threshold for anomaly detection (default: 5000.0)
+   - `OCR_FALLBACK_API`: Optional external OCR API endpoint
+
+5. **Status Flow**:
+   - Documents with status 'failed' (and attempts < MAX_RETRIES) → processed
+   - Success → status 'completed', needs_review flag set based on confidence/anomalies
+   - High confidence, no anomalies → needs_review=false
+   - Low confidence or anomalies detected → needs_review=true
+   - Max retries exceeded → remains 'failed' with needs_review=true
+
+6. **Error Tracking**:
+   - `attempts`: Number of processing attempts
+   - `lastError`: Last error message (2000 char limit)
+   - `lastErrorAt`: Timestamp of last error
+
+7. **Running the Worker**:
+   ```bash
+   python3 worker.py
+   ```
+   Or create a workflow in Replit to run it automatically
+
+8. **Dependencies**:
+   - Python packages: sqlalchemy, psycopg2-binary, boto3, pytesseract, pillow, pdf2image, requests
+   - System packages: tesseract, poppler_utils
+
 ## External Dependencies
 
 - **Replit Auth**: For secure user authentication (Google, GitHub, email/password).
