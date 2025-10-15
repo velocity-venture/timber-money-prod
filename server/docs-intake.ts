@@ -7,6 +7,7 @@ import { db } from "./db";
 import { documents } from "../shared/schema";
 import { eq, and } from "drizzle-orm";
 import { enrich } from "./docs-parse-pass";
+import { uploadToS3 } from "./s3-storage";
 
 export const docsRouter = Router();
 
@@ -132,6 +133,18 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
     // Any extraction error → failed, regardless of residual text
     const status = (!extractionError && text && parsed) ? "completed" : "failed";
 
+    // Upload to S3 and get S3 key
+    let s3Key: string | null = null;
+    try {
+      s3Key = await uploadToS3(srcPath, name, mime);
+    } catch (e) {
+      console.error("[docs] S3 upload error:", e);
+      // If S3 upload fails, clean up local file
+      try {
+        fs.unlinkSync(srcPath);
+      } catch {}
+    }
+
     const [doc] = await db
       .insert(documents)
       .values({
@@ -142,7 +155,8 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
         status,
         size,
         pages,
-        sourcePath: srcPath,
+        sourcePath: srcPath, // Keep for backward compatibility
+        s3Key,
         analysisData: parsed,
         needsReview,
         processedAt: new Date(),
