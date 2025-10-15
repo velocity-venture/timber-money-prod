@@ -129,21 +129,21 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
     const needsReview = extractionError || !parsed?.summary.total;
     const documentType = parsed?.type || "other";
     
-    // Simple binary status: extraction succeeded only if no errors AND we have text and parsed data
-    // Any extraction error → failed, regardless of residual text
-    const status = (!extractionError && text && parsed) ? "completed" : "failed";
-
     // Upload to S3 and get S3 key
     let s3Key: string | null = null;
+    let s3UploadError = false;
     try {
       s3Key = await uploadToS3(srcPath, name, mime);
+      // uploadToS3 deletes the local file on success
     } catch (e) {
       console.error("[docs] S3 upload error:", e);
-      // If S3 upload fails, clean up local file
-      try {
-        fs.unlinkSync(srcPath);
-      } catch {}
+      s3UploadError = true;
+      // Keep local file for retry/debugging when S3 upload fails
     }
+
+    // Status: successful only if extraction AND S3 upload both succeeded
+    // If either fails, mark as failed so we don't create unusable records
+    const status = (!extractionError && text && parsed && !s3UploadError) ? "completed" : "failed";
 
     const [doc] = await db
       .insert(documents)
@@ -155,10 +155,10 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
         status,
         size,
         pages,
-        sourcePath: srcPath, // Keep for backward compatibility
+        sourcePath: srcPath, // Keep for backward compatibility and retry
         s3Key,
         analysisData: parsed,
-        needsReview,
+        needsReview: needsReview || s3UploadError,
         processedAt: new Date(),
       })
       .returning();
@@ -171,7 +171,7 @@ docsRouter.post("/upload", upload.single("file"), async (req: any, res: Response
       documentType,
       status,
       pages,
-      needsReview,
+      needsReview: needsReview || s3UploadError,
       analysisData: parsed,
     });
   } catch (e) {

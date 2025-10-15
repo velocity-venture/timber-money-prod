@@ -93,6 +93,11 @@ Timber Money is an AI-powered financial management platform featuring the "Timbe
    - **PDF/OCR Upload** (POST /api/docs/upload): Direct text extraction with enrichment pass
      - PDF extraction using pdf-parse library
      - Image OCR using Tesseract.js
+     - **S3 Storage**: Files uploaded to AWS S3 for cloud storage
+       - S3 key stored in database (s3Key field)
+       - Local files cleaned up after S3 upload
+       - Download endpoint (GET /api/docs/:id/download) generates signed URLs (1 hour expiry)
+       - Requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, AWS_S3_BUCKET secrets
      - **Enrichment Pass** (server/docs-parse-pass.ts):
        - Period extraction: Captures statement date ranges (start/end)
        - Transaction parsing: Extracts individual line items (up to 500 transactions)
