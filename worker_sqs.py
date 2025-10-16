@@ -65,13 +65,19 @@ def textract_from_bytes(data_bytes):
 def update_document_completed(doc_id, analysis_json):
     now = datetime.utcnow().isoformat()
     safe_json = analysis_json.replace("'", "''")
-    q = f"UPDATE documents SET status='completed', analysis_data = '{safe_json}', processed_at = now() WHERE id = '{doc_id}';"
-    return run_psql_query(q)
+    q = f"UPDATE documents SET status='completed', analysis_data = '{safe_json}', processed_at = now() WHERE id = '{doc_id}' RETURNING id;"
+    result = run_psql_query(q)
+    if not result or result.strip() == '':
+        raise RuntimeError(f"Document {doc_id} not found in database - UPDATE affected 0 rows")
+    return result
 
 def update_document_failed(doc_id, msg):
     safe_msg = msg.replace("'", "''")
-    q = f"UPDATE documents SET status='failed', last_error = '{safe_msg}', last_error_at = now() WHERE id = '{doc_id}';"
-    return run_psql_query(q)
+    q = f"UPDATE documents SET status='failed', last_error = '{safe_msg}', last_error_at = now() WHERE id = '{doc_id}' RETURNING id;"
+    result = run_psql_query(q)
+    if not result or result.strip() == '':
+        raise RuntimeError(f"Document {doc_id} not found in database - UPDATE affected 0 rows")
+    return result
 
 def find_doc_by_source(source):
     q = f"SELECT id, source_path FROM documents WHERE source_path LIKE '%{source}%' LIMIT 1;"
