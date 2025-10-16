@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+import boto3, os, json, subprocess, time, sys
+region = os.getenv('AWS_REGION', 'us-east-1')
+sqs = boto3.client('sqs', region_name=region)
+
+# Get queue URL (or set SQS_QUEUE_URL env to override)
+queue_url = os.getenv('SQS_QUEUE_URL')
+if not queue_url:
+    try:
+        queue_url = sqs.get_queue_url(QueueName='timber-textract-queue')['QueueUrl']
+    except Exception as e:
+        print("ERROR: cannot find queue URL:", e)
+        sys.exit(1)
+
+def esc(s): 
+    return s.replace("'", "''")
+
+print("Listening on SQS:", queue_url)
+while True:
+    try:
+        resp = sqs.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=1, WaitTimeSeconds=20, VisibilityTimeout=60)
+        messages = resp.get('Messages', [])
+        if not messages:
+            continue
+        for msg in messages:
+            body = msg.get('Body','').strip()
+            payload = None
+            try:
+                payload = json.loads(body)
+            except Exception:
+                payload = None
+
+            doc_id = None
+            key = None
+            if payload and isinstance(payload, dict):
+                doc_id = payload.get('document_id') or payload.get('id') or payload.get('documentId')
+                key = payload.get('s3Key') or payload.get('key') or payload.get('source_path') or payload.get('sourcePath')
+            else:
+                # If body is plain text, treat as key
+                key = body
+
+            if doc_id:
+                doc_id = esc(str(doc_id))
+                sql = f"UPDATE documents SET status='queued', attempts=0, last_error=NULL, last_error_at=NULL, processed_at=NULL WHERE id='{doc_id}';"
+            elif key:
+                key = esc(str(key))
+                sql = f"UPDATE documents SET status='queued', attempts=0, last_error=NULL, last_error_at=NULL, processed_at=NULL WHERE source_path LIKE '%{key}%';"
+            else:
+                print("No doc identifier in message. Deleting message to avoid loop.")
+                sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=msg['ReceiptHandle'])
+                continue
+
+            try:
+                p = subprocess.run(["psql", os.environ["DATABASE_URL"], "-c", sql], capture_output=True, text=True)
+                print("psql rc=", p.returncode)
+                if p.stdout:
+                    print(p.stdout.strip())
+                if p.stderr:
+                    print("psql stderr:", p.stderr.strip())
+                if p.returncode == 0:
+                    # Delete message on success so worker will pick up queued doc
+                    sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=msg['ReceiptHandle'])
+                    print("Message processed and deleted.")
+                else:
+                    print("psql failed; leaving message in queue for retry.")
+            except Exception as e:
+                print("Exception running psql:", e)
+    except KeyboardInterrupt:
+        print("Stopping.")
+        sys.exit(0)
+    except Exception as e:
+        print("SQS poll error:", e)
+        time.sleep(5)
