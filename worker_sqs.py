@@ -139,9 +139,9 @@ def process_message(body):
 
     # Attempt Textract
     try:
-        if bucket:
+        if bucket and key:
             analysis = textract_from_s3(bucket, key)
-        else:
+        elif key:
             # try local file
             if os.path.exists(key):
                 with open(key, "rb") as f:
@@ -155,6 +155,8 @@ def process_message(body):
                     analysis = textract_from_s3(s3_bucket_env, bparts[1])
                 else:
                     raise RuntimeError("Cannot find file locally and no S3 bucket info")
+        else:
+            raise RuntimeError("No key/path available for processing")
         # prepare simple analysis JSON
         simple = {"extracted_text": analysis.get("text",""), "textract_blocks_count": len(analysis.get("full_response",{}).get("Blocks",[]))}
         analysis_json = json.dumps(simple)
