@@ -1,5 +1,0 @@
-name = "timber-money"
-pages_build_output_dir = "dist/public"
-
-[build]
-command = "npm run build"
