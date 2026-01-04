@@ -13,7 +13,7 @@ export default function Upload() {
       <div className="space-y-4">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Shoebox to Autopilot™</h1>
+            <h1 className="text-3xl font-bold">Timber Money</h1>
             <p className="text-muted-foreground mt-2 max-w-2xl">
               Turn your messy pile of bills into a set-and-forget money system. 
               Just dump everything here - we'll sort it out and create your automated payoff plan.

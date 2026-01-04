@@ -89,7 +89,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold">Your Autopilot Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Watch your shoebox transform into organized, automated finances
+            Watch your receipts transform into organized, automated finances
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export default function Dashboard() {
             <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
               <FileStack className="w-10 h-10 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">Start Your Shoebox to Autopilot Journey</h2>
+            <h2 className="text-xl font-semibold mb-2">Start Building Your Financial Dam</h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               Upload your financial documents and we'll create your personalized automated payoff plan.
               No daily nudges, no constant re-auth - just set it and forget it.

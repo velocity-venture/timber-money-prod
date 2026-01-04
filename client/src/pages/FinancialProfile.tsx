@@ -38,7 +38,7 @@ export default function FinancialProfile() {
       <div>
         <h1 className="text-3xl font-bold">Your Complete Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          From shoebox chaos to clear visibility - everything organized in one place
+          From receipt chaos to clear visibility - everything organized in one place
         </p>
       </div>
 
