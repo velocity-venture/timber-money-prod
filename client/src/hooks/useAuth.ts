@@ -7,6 +7,9 @@ export function useAuth() {
     queryKey: ["/api/auth/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
+    // Add timeout for faster failure in static deployments
+    gcTime: 0, // Don't cache failed requests
+    refetchOnMount: false,
   });
 
   return {
