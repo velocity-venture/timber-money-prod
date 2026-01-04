@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/Landing";
+import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import Upload from "@/pages/Upload";
 import FinancialProfile from "@/pages/FinancialProfile";
@@ -28,7 +29,7 @@ import SubscriptionSuccess from "@/pages/subscription-success";
 import NotFound from "@/pages/not-found";
 
 // Public routes that don't require auth check
-const PUBLIC_ROUTES = ["/", "/pricing", "/privacy", "/security", "/terms", "/pitch"];
+const PUBLIC_ROUTES = ["/", "/auth", "/pricing", "/privacy", "/security", "/terms", "/pitch"];
 
 function Router() {
   const [location] = useLocation();
@@ -40,6 +41,7 @@ function Router() {
     return (
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/auth" component={Auth} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/privacy" component={Privacy} />
         <Route path="/security" component={Security} />
@@ -64,6 +66,7 @@ function Router() {
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
+          <Route path="/auth" component={Auth} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/security" component={Security} />
