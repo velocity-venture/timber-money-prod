@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 
 export default function Auth() {
-  // Redirect to backend login endpoint which handles Replit OIDC
+  // Redirect to backend login endpoint
   const handleLogin = () => {
     const returnUrl = window.location.pathname;
     window.location.href = `/api/login?returnUrl=${encodeURIComponent(returnUrl)}`;
@@ -39,7 +39,7 @@ export default function Auth() {
               onClick={handleLogin}
               className="w-full px-8 py-4 bg-[#00D084] text-[#0B1F3B] text-lg font-bold rounded shadow-lg shadow-[#00D084]/30 hover:bg-[#00D084]/90 transition-all"
             >
-              Sign In with Replit
+              Get Started Free
             </button>
             
             <p className="text-sm text-gray-400 text-center">
