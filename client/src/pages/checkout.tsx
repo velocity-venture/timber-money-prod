@@ -11,10 +11,11 @@ import { Loader2 } from "lucide-react";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+if (!stripeKey && import.meta.env.DEV) {
+  console.warn('Stripe key missing — payments disabled');
 }
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 const CheckoutForm = ({ amount }: { amount: number }) => {
   const stripe = useStripe();
@@ -109,10 +110,30 @@ export default function Checkout() {
 
   useEffect(() => {
     // Create PaymentIntent when amount is set
-    if (amount > 0) {
+    if (amount > 0 && stripePromise) {
       createPaymentIntent();
     }
   }, []);
+
+  if (!stripePromise) {
+    return (
+      <div className="container max-w-2xl mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>One-Time Payment</CardTitle>
+            <CardDescription>
+              Payment processing is currently unavailable
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Stripe payment integration is not configured. Please contact support.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!clientSecret) {
     return (
