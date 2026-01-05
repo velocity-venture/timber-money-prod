@@ -13,6 +13,12 @@ export default function Auth() {
     setIsSubmitting(true);
     setError(null);
     
+    if (!supabase) {
+      setError("Authentication service is temporarily unavailable. Please try again later.");
+      setIsSubmitting(false);
+      return;
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
