@@ -10,10 +10,12 @@ import { Loader2, Check } from "lucide-react";
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-if (!stripeKey && import.meta.env.DEV) {
-  console.warn('Stripe key missing — payments disabled');
+// Only use publishable keys (pk_*), not secret keys (sk_*)
+const isValidPublishableKey = stripeKey && stripeKey.startsWith('pk_');
+if (!isValidPublishableKey && import.meta.env.DEV) {
+  console.warn('Stripe publishable key missing or invalid — payments disabled');
 }
-const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+const stripePromise = isValidPublishableKey && stripeKey ? loadStripe(stripeKey) : null;
 
 const SubscribeForm = () => {
   const stripe = useStripe();
