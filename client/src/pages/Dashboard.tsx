@@ -22,8 +22,12 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const userEmail = user?.email || "User";
+  
   // Fetch real data
   const { data: debts } = useQuery<any[]>({
     queryKey: ["/api/debts"],
@@ -87,9 +91,9 @@ export default function Dashboard() {
     return (
       <div className="space-y-6" data-testid="page-dashboard">
         <div>
-          <h1 className="text-3xl font-bold">Your Autopilot Dashboard</h1>
+          <h1 className="text-3xl font-bold">Welcome, {userEmail.split('@')[0]}!</h1>
           <p className="text-muted-foreground mt-1">
-            Watch your receipts transform into organized, automated finances
+            Your Timber dashboard — automated finances on autopilot
           </p>
         </div>
 
