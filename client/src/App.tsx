@@ -29,7 +29,7 @@ import SubscriptionSuccess from "@/pages/subscription-success";
 import NotFound from "@/pages/not-found";
 
 // Public routes that don't require auth check
-const PUBLIC_ROUTES = ["/", "/auth", "/pricing", "/privacy", "/security", "/terms", "/pitch"];
+const PUBLIC_ROUTES = ["/", "/auth", "/dashboard", "/pricing", "/privacy", "/security", "/terms", "/pitch"];
 
 function Router() {
   const [location] = useLocation();
@@ -42,6 +42,7 @@ function Router() {
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/auth" component={Auth} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/privacy" component={Privacy} />
         <Route path="/security" component={Security} />

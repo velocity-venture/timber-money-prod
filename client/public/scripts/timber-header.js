@@ -19,13 +19,13 @@
 
   el.innerHTML = '' +
     '<div id="timber-wrap" style="position:relative;width:100%;height:100%;">' +
-      '<img src="/mascot/timber-animated.svg" alt="Timber, your money guide" ' +
-      'style="width:100%;height:100%;display:block;border-radius:50%" />' +
-      '<div id="timber-tip" style="position:absolute;top:-6px;right:72px;max-width:220px;' +
-      'background:#0f172a;color:#f8fafc;border:1px solid #10b981;border-radius:10px;padding:8px 10px;' +
-      'font:500 12px/1.2 system-ui,Segoe UI,Inter,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.25);' +
-      'display:none;">' +
-        'Tip: Every dollar needs a job. Be wise as serpents—harmless as doves. Steward your money on purpose!' +
+      '<img src="/mascot/timber_v1.png" alt="Timber, your AI Financial Beaver" ' +
+      'style="width:100%;height:100%;display:block;border-radius:50%;object-fit:contain;background:#0B1F3B;" />' +
+      '<div id="timber-tip" style="position:absolute;top:-6px;right:72px;max-width:260px;' +
+      'background:#0B1F3B;color:#f8fafc;border:1px solid #00D084;border-radius:10px;padding:10px 12px;' +
+      'font:500 13px/1.4 system-ui,Segoe UI,Inter,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.4);' +
+      'pointer-events:none;white-space:nowrap;opacity:0;transition:opacity 0.2s ease;">' +
+        'Timber, your AI Financial Beaver' +
       '</div>' +
     '</div>';
 
@@ -48,19 +48,33 @@
     if (tipData) {
       tip.textContent = tipData.text;
       setTimeout(function(){ 
-        tip.style.display = 'block'; 
+        tip.style.opacity = '1'; 
         try{ window.TimberAnalytics && TimberAnalytics.send("tip_impression", tip.textContent||""); }catch(e){} 
       }, 1200);
-      setTimeout(function(){ tip.style.display = 'none'; }, 5200);
-      // Hover to re-show
-      el.addEventListener('mouseenter', function(){ 
-        tip.style.display = 'block'; 
-        try{ window.TimberAnalytics && TimberAnalytics.send("tip_hover", tip.textContent||""); }catch(e){} 
-      });
-      el.addEventListener('mouseleave', function(){ tip.style.display = 'none'; });
-      el.addEventListener('click', function(){ 
-        try{ window.TimberAnalytics && TimberAnalytics.send("tip_click", tip.textContent||""); }catch(e){} 
-      });
+      setTimeout(function(){ tip.style.opacity = '0'; }, 5200);
+    }
+    
+    // Hover to show "Timber, your AI Financial Beaver" tooltip
+    var hoverTip = el.querySelector('#timber-tip');
+    el.addEventListener('mouseenter', function(){ 
+      hoverTip.textContent = 'Timber, your AI Financial Beaver';
+      hoverTip.style.opacity = '1';
+      try{ window.TimberAnalytics && TimberAnalytics.send("tip_hover", hoverTip.textContent||""); }catch(e){} 
+    });
+    el.addEventListener('mouseleave', function(){ 
+      hoverTip.style.opacity = '0';
+      if (tipData) {
+        hoverTip.textContent = tipData.text;
+      }
+    });
+    el.addEventListener('click', function(){ 
+      try{ window.TimberAnalytics && TimberAnalytics.send("tip_click", hoverTip.textContent||""); }catch(e){} 
+    });
+    
+    // Add subtle float animation
+    var img = el.querySelector('img');
+    if (img) {
+      img.style.animation = 'float 3s ease-in-out infinite';
     }
   }
 
@@ -88,4 +102,12 @@
   }
   window.addEventListener('resize', onResize);
   onResize();
+  
+  // Add float animation CSS if not already present
+  if (!document.getElementById('timber-badge-styles')) {
+    var style = document.createElement('style');
+    style.id = 'timber-badge-styles';
+    style.textContent = '@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }';
+    document.head.appendChild(style);
+  }
 })();
