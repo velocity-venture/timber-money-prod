@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TrendingDown, CreditCard } from "lucide-react";
+import { ArrowDown, CreditCard } from "lucide-react";
 
 interface DebtCardProps {
   creditor: string;
@@ -67,7 +67,7 @@ export function DebtCard({
 
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <TrendingDown className="w-4 h-4" />
+            <ArrowDown className="w-4 h-4" />
             <span>Minimum Payment</span>
           </div>
           <span className="text-sm font-mono font-medium">

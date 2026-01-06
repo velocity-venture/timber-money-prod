@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { FileStack, Zap, CheckCircle2, CreditCard, TrendingUp, PiggyBank, Shield, BarChart3, X, Check } from "lucide-react";
+import { FileStack, Zap, CheckCircle2, CreditCard, TrendingUp, PiggyBank, Shield, BarChart3, X, Check, ArrowDown } from "lucide-react";
 
 export default function Landing() {
   return (
@@ -149,7 +149,7 @@ export default function Landing() {
             </div>
 
             <div className="bg-[#0B1F3B] border border-[#00D084]/20 rounded-lg p-6">
-              <TrendingDown className="w-10 h-10 text-[#00D084] mb-4" />
+              <ArrowDown className="w-10 h-10 text-[#00D084] mb-4" />
               <h3 className="text-xl font-bold mb-2">Debt Planning</h3>
               <p className="text-gray-400 text-sm">AI-powered avalanche strategy to clear debt faster with optimal payoff plans.</p>
             </div>

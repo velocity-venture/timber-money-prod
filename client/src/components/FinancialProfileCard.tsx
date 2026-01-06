@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, TrendingUp, TrendingDown } from "lucide-react";
+import { Download, TrendingUp, ArrowDown } from "lucide-react";
 
 interface FinancialProfileCardProps {
   totalAssets: number;
@@ -56,7 +56,7 @@ export function FinancialProfileCard({
               </div>
               <div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                  <TrendingDown className="w-3 h-3" />
+                  <ArrowDown className="w-3 h-3" />
                   <span>Total Liabilities</span>
                 </div>
                 <p className="text-lg font-mono font-semibold">

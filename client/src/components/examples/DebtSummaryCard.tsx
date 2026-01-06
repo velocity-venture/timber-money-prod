@@ -1,5 +1,5 @@
 import { DebtSummaryCard } from "../DebtSummaryCard";
-import { DollarSign, TrendingDown, Calendar, PiggyBank } from "lucide-react";
+import { DollarSign, ArrowDown, Calendar, PiggyBank } from "lucide-react";
 
 export default function DebtSummaryCardExample() {
   return (
@@ -14,7 +14,7 @@ export default function DebtSummaryCardExample() {
         title="Monthly Payment"
         value="$1,845"
         subtitle="Combined minimum"
-        icon={TrendingDown}
+        icon={ArrowDown}
       />
       <DebtSummaryCard
         title="Debt-Free Date"

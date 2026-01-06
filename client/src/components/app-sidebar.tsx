@@ -12,7 +12,6 @@ import {
 import {
   LayoutDashboard,
   Upload,
-  TrendingDown,
   FileText,
   Settings,
   CreditCard,

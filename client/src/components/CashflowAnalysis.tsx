@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
   TrendingUp, 
-  TrendingDown, 
+  ArrowDown, 
   DollarSign, 
   Target, 
   AlertCircle,
@@ -168,7 +168,7 @@ export function CashflowAnalysis() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="w-5 h-5 text-destructive" />
+              <ArrowDown className="w-5 h-5 text-destructive" />
               Monthly Expenses
             </CardTitle>
           </CardHeader>
